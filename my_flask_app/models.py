@@ -38,6 +38,7 @@ class Diary(db.Model):
     diary_title = db.Column(db.String(255))
     diary_content = db.Column(db.Text, nullable=False)
     media = db.Column(JSONB)
+    has_chat = db.Column(db.Boolean, default=False)
     summary = db.Column(db.Text, nullable=False)
     summary_embedding = db.Column(Vector(1536), nullable=False)
 
@@ -49,6 +50,28 @@ class Diary(db.Model):
             "diary_title": self.diary_title,
             "diary_content": self.diary_content,
             "media": self.media,
+            "has_chat": self.has_chat,
             "summary": self.summary,
             "summary_embedding": self.summary_embedding,
+        }
+
+
+class Message(db.Model):
+    __tablename__ = "messages"
+
+    message_id = db.Column(db.Integer, primary_key=True)
+    diary_id = db.Column(
+        db.Integer, db.ForeignKey("diary.diary_id", ondelete="CASCADE"), nullable=False
+    )
+    sender = db.Column(db.String(50), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    send_time = db.Column(db.DateTime, default=datetime.now)
+
+    def to_dict(self):
+        return {
+            "message_id": self.message_id,
+            "diary_id": self.diary_id,
+            "sender": self.sender,
+            "content": self.content,
+            "send_time": self.send_time,
         }

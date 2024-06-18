@@ -29,6 +29,7 @@ class DiaryResource(Resource):
 
     def put(self, user_id, diary_id):
         diary = Diary.query.filter_by(user_id=user_id, diary_id=diary_id).first_or_404()
+
         args = parser.parse_args()
         diary.diary_date = args.get("diary_date", diary.diary_date)
         diary.diary_title = args.get("diary_title", diary.diary_title)
@@ -42,6 +43,7 @@ class DiaryResource(Resource):
 
     def delete(self, user_id, diary_id):
         diary = Diary.query.filter_by(user_id=user_id, diary_id=diary_id).first_or_404()
+
         db.session.delete(diary)
         db.session.commit()
 
@@ -60,6 +62,7 @@ class DiaryListResource(Resource):
 
     def post(self, user_id):
         args = parser.parse_args()
+
         new_diary = Diary(
             user_id=user_id,
             diary_date=args["diary_date"],
