@@ -124,3 +124,6 @@ pyrightcache/
 
 # Pyre type checker
 .pyre/
+
+# firebase
+service-account-key.json

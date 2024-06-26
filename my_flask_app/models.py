@@ -14,9 +14,12 @@ class User(db.Model):
     created_time = db.Column(db.DateTime, default=datetime.now)
     last_login = db.Column(db.DateTime)
 
-    diaries = db.relationship(
-        "Diary", backref="user", lazy=True, cascade="all, delete-orphan"
-    )
+    # diaries = db.relationship(
+    #     "Diary", backref="users", lazy=True, cascade="all, delete-orphan"
+    # )
+    # diaries = db.relationship(
+    #     "Diary", backref="users", lazy=True, cascade="all, delete-orphan"
+    # )
 
     def to_dict(self):
         return {
@@ -33,7 +36,11 @@ class Diary(db.Model):
     __tablename__ = "diary"
 
     diary_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(50), db.ForeignKey("users.user_id"), nullable=False)
+    user_id = db.Column(
+        db.String(50),
+        db.ForeignKey("users.user_id", ondelete="CASCADE"),
+        nullable=False,
+    )
     diary_date = db.Column(db.Date, nullable=False)
     diary_title = db.Column(db.String(255))
     diary_content = db.Column(db.Text, nullable=False)
@@ -60,17 +67,19 @@ class Message(db.Model):
     __tablename__ = "messages"
 
     message_id = db.Column(db.Integer, primary_key=True)
-    diary_id = db.Column(
-        db.Integer, db.ForeignKey("diary.diary_id", ondelete="CASCADE"), nullable=False
+    user_id = db.Column(
+        db.String(50),
+        db.ForeignKey("users.user_id", ondelete="CASCADE"),
+        nullable=False,
     )
-    sender = db.Column(db.String(50), nullable=False)
+    sender = db.Column(db.String(20), nullable=False)
     content = db.Column(db.Text, nullable=False)
     send_time = db.Column(db.DateTime, default=datetime.now)
 
     def to_dict(self):
         return {
             "message_id": self.message_id,
-            "diary_id": self.diary_id,
+            "user_id": self.user_id,
             "sender": self.sender,
             "content": self.content,
             "send_time": self.send_time,

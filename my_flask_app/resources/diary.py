@@ -69,6 +69,7 @@ class DiaryListResource(Resource):
             diary_title=args.get("diary_title"),
             diary_content=args["diary_content"],
             media=args.get("media"),
+            has_chat=False,
             summary=args["summary"],
             summary_embedding=args["summary_embedding"],
         )

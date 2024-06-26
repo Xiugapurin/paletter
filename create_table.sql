@@ -17,3 +17,11 @@ CREATE TABLE diary (
 	summary TEXT NOT NULL,
 	summary_embedding vector(1536) NOT NULL
 );
+
+CREATE TABLE messages (
+    message_id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES "user" (user_id) ON DELETE CASCADE NOT NULL,
+    sender VARCHAR(20) NOT NULL,
+    content TEXT NOT NULL,
+    send_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
