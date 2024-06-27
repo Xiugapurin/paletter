@@ -23,7 +23,6 @@ class User(db.Model):
 
     def to_dict(self):
         return {
-            "user_id": self.user_id,
             "name": self.name,
             "llm_preference": self.llm_preference,
             "profile_picture": self.profile_picture,
@@ -52,7 +51,6 @@ class Diary(db.Model):
     def to_dict(self):
         return {
             "diary_id": self.diary_id,
-            "user_id": self.user_id,
             "diary_date": self.diary_date,
             "diary_title": self.diary_title,
             "diary_content": self.diary_content,
@@ -79,8 +77,7 @@ class Message(db.Model):
     def to_dict(self):
         return {
             "message_id": self.message_id,
-            "user_id": self.user_id,
             "sender": self.sender,
             "content": self.content,
-            "send_time": self.send_time,
+            "send_time": self.send_time.isoformat(),
         }
