@@ -1,13 +1,18 @@
 import os
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
+from flask_restful import Api
 import firebase_admin
 from firebase_admin import credentials, auth
 from config import Config
 from .extensions import db, migrate
-from flask_restful import Api
+from .scheduler import start_scheduler
 from my_flask_app.resources.user import UserResource, UserListResource
-from my_flask_app.resources.diary import DiaryResource, DiaryListResource
+from my_flask_app.resources.diary import (
+    DiaryResource,
+    DiaryListResource,
+    DiaryCalenderResource,
+)
 from my_flask_app.resources.message import MessageListResource
 
 
@@ -28,6 +33,7 @@ def create_app(config_class=Config):
     api.add_resource(UserListResource, "/api/users")
     api.add_resource(DiaryResource, "/api/diary/<int:diary_id>")
     api.add_resource(DiaryListResource, "/api/diaries")
+    api.add_resource(DiaryCalenderResource, "/api/diaries/<int:year>/<int:month>")
     api.add_resource(MessageListResource, "/api/messages")
 
     @app.before_request
@@ -44,5 +50,7 @@ def create_app(config_class=Config):
                 g.user_id = decoded_token["uid"]
         except Exception as e:
             return jsonify({"error": str(e)}), 401
+
+    start_scheduler()
 
     return app

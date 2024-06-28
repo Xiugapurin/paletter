@@ -1,7 +1,7 @@
-from .extensions import db
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy.dialects.postgresql import JSONB
 from pgvector.sqlalchemy import Vector
+from .extensions import db
 
 
 class User(db.Model):
@@ -14,13 +14,6 @@ class User(db.Model):
     created_time = db.Column(db.DateTime, default=datetime.now)
     last_login = db.Column(db.DateTime)
 
-    # diaries = db.relationship(
-    #     "Diary", backref="users", lazy=True, cascade="all, delete-orphan"
-    # )
-    # diaries = db.relationship(
-    #     "Diary", backref="users", lazy=True, cascade="all, delete-orphan"
-    # )
-
     def to_dict(self):
         return {
             "name": self.name,
@@ -32,7 +25,7 @@ class User(db.Model):
 
 
 class Diary(db.Model):
-    __tablename__ = "diary"
+    __tablename__ = "diaries"
 
     diary_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(
@@ -40,22 +33,28 @@ class Diary(db.Model):
         db.ForeignKey("users.user_id", ondelete="CASCADE"),
         nullable=False,
     )
-    diary_date = db.Column(db.Date, nullable=False)
-    diary_title = db.Column(db.String(255))
-    diary_content = db.Column(db.Text, nullable=False)
+    date = db.Column(
+        db.Date,
+        nullable=False,
+        default=lambda: (datetime.now() + timedelta(hours=8)).date(),
+    )
+    content = db.Column(db.Text, nullable=False, default="")
     media = db.Column(JSONB)
-    has_chat = db.Column(db.Boolean, default=False)
-    summary = db.Column(db.Text, nullable=False)
-    summary_embedding = db.Column(Vector(1536), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="EMPTY")
+    tag = db.Column(db.String(255))
+    color = db.Column(db.String(20), nullable=False, default="GRAY")
+    summary = db.Column(db.Text)
+    summary_embedding = db.Column(Vector(1536))
 
     def to_dict(self):
         return {
             "diary_id": self.diary_id,
-            "diary_date": self.diary_date,
-            "diary_title": self.diary_title,
-            "diary_content": self.diary_content,
+            "date": self.date,
+            "content": self.content,
             "media": self.media,
-            "has_chat": self.has_chat,
+            "status": self.status,
+            "tag": self.tag,
+            "color": self.color,
             "summary": self.summary,
             "summary_embedding": self.summary_embedding,
         }
@@ -72,7 +71,9 @@ class Message(db.Model):
     )
     sender = db.Column(db.String(20), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    send_time = db.Column(db.DateTime, default=datetime.now)
+    send_time = db.Column(
+        db.DateTime, default=lambda: (datetime.now() + timedelta(hours=8)).date()
+    )
 
     def to_dict(self):
         return {

@@ -1,79 +1,99 @@
+from datetime import datetime
+from calendar import monthrange
+from flask import g
 from flask_restful import Resource, reqparse
+from sqlalchemy import extract
 from my_flask_app import db
 from my_flask_app.models import Diary
 
 parser = reqparse.RequestParser()
 parser.add_argument(
-    "diary_date", type=str, required=True, help="Diary date is required"
+    "content", type=str, required=True, help="Diary content is required"
 )
-parser.add_argument("diary_title", type=str)
-parser.add_argument(
-    "diary_content", type=str, required=True, help="Diary content is required"
-)
-parser.add_argument("media", type=dict, location="json")
-parser.add_argument("summary", type=str, required=True, help="Summary is required")
-parser.add_argument(
-    "summary_embedding",
-    type=list,
-    location="json",
-    required=True,
-    help="Summary embedding is required",
-)
+parser.add_argument("media", type=dict)
 
 
 class DiaryResource(Resource):
-    def get(self, user_id, diary_id):
+    def get(self, diary_id):
+        user_id = g.user_id
         diary = Diary.query.filter_by(user_id=user_id, diary_id=diary_id).first_or_404()
 
         return diary.to_dict()
 
-    def put(self, user_id, diary_id):
+    def put(self, diary_id):
+        user_id = g.user_id
         diary = Diary.query.filter_by(user_id=user_id, diary_id=diary_id).first_or_404()
 
         args = parser.parse_args()
-        diary.diary_date = args.get("diary_date", diary.diary_date)
-        diary.diary_title = args.get("diary_title", diary.diary_title)
-        diary.diary_content = args.get("diary_content", diary.diary_content)
+        diary.content = args.get("diary_content", diary.diary_content)
         diary.media = args.get("media", diary.media)
-        diary.summary = args.get("summary", diary.summary)
-        diary.summary_embedding = args.get("summary_embedding", diary.summary_embedding)
         db.session.commit()
 
         return diary.to_dict()
 
-    def delete(self, user_id, diary_id):
+    def delete(self, diary_id):
+        user_id = g.user_id
         diary = Diary.query.filter_by(user_id=user_id, diary_id=diary_id).first_or_404()
 
         db.session.delete(diary)
         db.session.commit()
 
-        return "", 204
+        return "", 200
 
 
 class DiaryListResource(Resource):
-    def get(self, user_id):
+    def get(self):
+        user_id = g.user_id
         diaries = (
             Diary.query.filter_by(user_id=user_id)
             .order_by(Diary.diary_date.desc())
             .all()
         )
 
-        return [diary.to_dict() for diary in diaries]
+        return [diary.to_dict() for diary in diaries], 200
 
-    def post(self, user_id):
+    def post(self):
+        user_id = g.user_id
         args = parser.parse_args()
 
         new_diary = Diary(
             user_id=user_id,
-            diary_date=args["diary_date"],
-            diary_title=args.get("diary_title"),
-            diary_content=args["diary_content"],
+            content=args["content"],
             media=args.get("media"),
-            has_chat=False,
-            summary=args["summary"],
-            summary_embedding=args["summary_embedding"],
         )
         db.session.add(new_diary)
         db.session.commit()
 
-        return new_diary.to_dict(), 201
+        return new_diary.to_dict(), 200
+
+
+class DiaryCalenderResource(Resource):
+    def get(self, year, month):
+        user_id = g.user_id
+
+        try:
+            year = int(year)
+            month = int(month)
+        except ValueError:
+            return {"error": "Invalid year or month format."}, 400
+
+        if month < 1 or month > 12:
+            return {"error": "Invalid month."}, 400
+
+        if year < 1900 or year > datetime.now().year + 1:
+            return {"error": "Invalid year."}, 400
+
+        days_in_month = monthrange(year, month)[1]
+        diary_list = [{"diary_id": -1, "color": "GRAY"} for _ in range(days_in_month)]
+
+        diaries = Diary.query.filter(
+            Diary.user_id == user_id,
+            extract("year", Diary.date) == year,
+            extract("month", Diary.date) == month,
+        ).all()
+
+        for diary in diaries:
+            day = diary.date.day
+            diary_list[day - 1] = {"diary_id": diary.diary_id, "color": diary.color}
+
+        return diary_list, 200
