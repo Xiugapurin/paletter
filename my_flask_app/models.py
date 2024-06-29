@@ -43,20 +43,48 @@ class Diary(db.Model):
     status = db.Column(db.String(20), nullable=False, default="EMPTY")
     tag = db.Column(db.String(255))
     color = db.Column(db.String(20), nullable=False, default="GRAY")
-    summary = db.Column(db.Text)
+    summary = db.Column(db.Text, nullable=False, default="")
     summary_embedding = db.Column(Vector(1536))
 
     def to_dict(self):
         return {
             "diary_id": self.diary_id,
-            "date": self.date,
+            "date": self.date.isoformat(),
             "content": self.content,
             "media": self.media,
             "status": self.status,
             "tag": self.tag,
-            "color": self.color,
             "summary": self.summary,
             "summary_embedding": self.summary_embedding,
+        }
+
+    def to_limited_dict(self):
+        return {
+            "diary_id": self.diary_id,
+            "date": self.date,
+            "status": self.status,
+        }
+
+
+class Color(db.Model):
+    __tablename__ = "colors"
+
+    color_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(50), nullable=False)
+    diary_id = db.Column(
+        db.Integer,
+        db.ForeignKey("diaries.diary_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    color = db.Column(db.String(50), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+
+    def to_dict(self):
+        return {
+            "color_id": self.color_id,
+            "diary_id": self.diary_id,
+            "color": self.color,
+            "content": self.content,
         }
 
 

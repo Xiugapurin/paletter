@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from calendar import monthrange
 from flask import g
 from flask_restful import Resource, reqparse
@@ -7,25 +7,39 @@ from my_flask_app import db
 from my_flask_app.models import Diary
 
 parser = reqparse.RequestParser()
-parser.add_argument(
-    "content", type=str, required=True, help="Diary content is required"
-)
-parser.add_argument("media", type=dict)
 
 
 class DiaryResource(Resource):
     def get(self, diary_id):
         user_id = g.user_id
+        if diary_id == 0:
+            today = datetime.now() + timedelta(hours=8)
+            today_date = today.date()
+
+            diary = Diary.query.filter_by(user_id=user_id, date=today_date).first()
+
+            if not diary:
+                print("Creating new diary")
+                diary = Diary(
+                    user_id=user_id, date=today_date, status="EDITING", summary=""
+                )
+                db.session.add(diary)
+                db.session.commit()
+
+            return diary.to_dict(), 200
+
         diary = Diary.query.filter_by(user_id=user_id, diary_id=diary_id).first_or_404()
 
-        return diary.to_dict()
+        return diary.to_dict(), 200
 
     def put(self, diary_id):
         user_id = g.user_id
+        parser.add_argument("content", type=str, required=True, help="Diary content")
+        parser.add_argument("media", type=dict, required=False, help="Diary media")
         diary = Diary.query.filter_by(user_id=user_id, diary_id=diary_id).first_or_404()
 
         args = parser.parse_args()
-        diary.content = args.get("diary_content", diary.diary_content)
+        diary.content = args.get("content")
         diary.media = args.get("media", diary.media)
         db.session.commit()
 
@@ -44,22 +58,30 @@ class DiaryResource(Resource):
 class DiaryListResource(Resource):
     def get(self):
         user_id = g.user_id
-        diaries = (
+        parser.add_argument(
+            "page", type=int, required=False, default=1, help="Page number"
+        )
+        args = parser.parse_args()
+        page = args.get("page", 1)
+
+        pagination = (
             Diary.query.filter_by(user_id=user_id)
-            .order_by(Diary.diary_date.desc())
-            .all()
+            .order_by(Diary.date.desc())
+            .paginate(page, 20, error_out=False)
         )
 
-        return [diary.to_dict() for diary in diaries], 200
+        diaries = [diary.to_limited_dict() for diary in pagination.items]
+        return {
+            "diaries": diaries,
+            "current_page": pagination.page,
+        }, 200
 
     def post(self):
         user_id = g.user_id
-        args = parser.parse_args()
 
         new_diary = Diary(
             user_id=user_id,
-            content=args["content"],
-            media=args.get("media"),
+            media={},
         )
         db.session.add(new_diary)
         db.session.commit()
