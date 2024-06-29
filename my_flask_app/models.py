@@ -54,14 +54,12 @@ class Diary(db.Model):
             "media": self.media,
             "status": self.status,
             "tag": self.tag,
-            "summary": self.summary,
-            "summary_embedding": self.summary_embedding,
         }
 
     def to_limited_dict(self):
         return {
             "diary_id": self.diary_id,
-            "date": self.date,
+            "date": self.date.isoformat(),
             "status": self.status,
         }
 

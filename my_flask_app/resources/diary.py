@@ -11,6 +11,7 @@ parser = reqparse.RequestParser()
 
 class DiaryResource(Resource):
     def get(self, diary_id):
+        print(datetime.now())
         user_id = g.user_id
         if diary_id == 0:
             today = datetime.now() + timedelta(hours=8)
@@ -56,24 +57,22 @@ class DiaryResource(Resource):
 
 
 class DiaryListResource(Resource):
-    def get(self):
+    def get(self, page):
         user_id = g.user_id
-        parser.add_argument(
-            "page", type=int, required=False, default=1, help="Page number"
-        )
-        args = parser.parse_args()
-        page = args.get("page", 1)
 
         pagination = (
             Diary.query.filter_by(user_id=user_id)
             .order_by(Diary.date.desc())
-            .paginate(page, 20, error_out=False)
+            .paginate(page=page, per_page=20, error_out=False)
         )
 
         diaries = [diary.to_limited_dict() for diary in pagination.items]
+        next_page = pagination.page + 1 if pagination.has_next else -1
+
         return {
             "diaries": diaries,
-            "current_page": pagination.page,
+            "next_page": next_page,
+            "total_pages": pagination.pages,
         }, 200
 
     def post(self):

@@ -34,13 +34,13 @@ class UserResource(Resource):
 
         return user.to_dict()
 
-    def delete(self):
-        user_id = g.user_id
-        user = User.query.get_or_404(user_id)
-        db.session.delete(user)
-        db.session.commit()
+    # def delete(self):
+    #     user_id = g.user_id
+    #     user = User.query.get_or_404(user_id)
+    #     db.session.delete(user)
+    #     db.session.commit()
 
-        return "", 200
+    #     return "", 200
 
 
 class UserListResource(Resource):

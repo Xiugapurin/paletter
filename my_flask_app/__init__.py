@@ -32,7 +32,7 @@ def create_app(config_class=Config):
     api.add_resource(UserResource, "/api/user")
     api.add_resource(UserListResource, "/api/users")
     api.add_resource(DiaryResource, "/api/diary/<int:diary_id>")
-    api.add_resource(DiaryListResource, "/api/diaries")
+    api.add_resource(DiaryListResource, "/api/diaries/<int:page>")
     api.add_resource(DiaryCalenderResource, "/api/diaries/<int:year>/<int:month>")
     api.add_resource(MessageListResource, "/api/messages")
 
