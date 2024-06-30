@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from .extensions import scheduler, db
 from .models import Diary, Color
-from .langchain.responses import convert_diary_to_colors
+from .langchain.responses import convert_diary_to_colors, convert_diary_to_summary
 
 
 def process_daily_diary():
@@ -14,27 +14,34 @@ def process_daily_diary():
         diaries = Diary.query.all()
         for diary in diaries:
             existing_colors = Color.query.filter_by(diary_id=diary.diary_id).all()
-            if existing_colors:
-                print(diary.diary_id, " colors already exist.")
-                continue
-
-            if len(diary.content) < 20:
-                color = Color(
-                    user_id=diary.user_id,
-                    diary_id=diary.diary_id,
-                    color="Gray",
-                    content=diary.content,
-                )
-                db.session.add(color)
-            else:
-                color_objects = convert_diary_to_colors(diary.content)
-                for color_obj in color_objects:
+            if not existing_colors:
+                if len(diary.content) < 20:
                     color = Color(
                         user_id=diary.user_id,
                         diary_id=diary.diary_id,
-                        color=color_obj["color"],
-                        content=color_obj["content"],
+                        color="Gray",
+                        content=diary.content,
                     )
                     db.session.add(color)
+                else:
+                    color_objects = convert_diary_to_colors(diary.content)
+                    for color_obj in color_objects:
+                        color = Color(
+                            user_id=diary.user_id,
+                            diary_id=diary.diary_id,
+                            color=color_obj["color"],
+                            content=color_obj["content"],
+                        )
+                        db.session.add(color)
+            if diary.summary == "" and len(diary.content) > 20:
+                print("Processing diary: ", diary.diary_id)
+                diary.status = "PAINTING"
+                if len(diary.content) > 20:
+                    summary_item = convert_diary_to_summary(diary.content)
+                    diary.tag = summary_item["tag"]
+                    diary.summary = summary_item["summary"]
+                    diary.summary_embedding = summary_item["summary_embedding"]
+                else:
+                    diary.tag = "其他"
 
         db.session.commit()

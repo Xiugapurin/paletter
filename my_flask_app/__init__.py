@@ -27,7 +27,7 @@ def create_app(config_class=Config):
 
     scheduler.init_app(app)
     scheduler.add_job(
-        func=process_daily_diary, trigger="cron", hour=18, minute=21, id="interval_task"
+        func=process_daily_diary, trigger="cron", hour=0, minute=0, id="interval_task"
     )
     scheduler.start()
 

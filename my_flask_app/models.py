@@ -42,7 +42,6 @@ class Diary(db.Model):
     media = db.Column(JSONB)
     status = db.Column(db.String(20), nullable=False, default="EMPTY")
     tag = db.Column(db.String(255))
-    color = db.Column(db.String(20), nullable=False, default="GRAY")
     summary = db.Column(db.Text, nullable=False, default="")
     summary_embedding = db.Column(Vector(1536))
 
@@ -96,15 +95,15 @@ class Message(db.Model):
         nullable=False,
     )
     sender = db.Column(db.String(20), nullable=False)
+    emotion = db.Column(db.String(20), nullable=False, default="")
     content = db.Column(db.Text, nullable=False)
-    send_time = db.Column(
-        db.DateTime, default=lambda: (datetime.now() + timedelta(hours=8)).date()
-    )
+    send_time = db.Column(db.DateTime)
 
     def to_dict(self):
         return {
             "message_id": self.message_id,
             "sender": self.sender,
+            "emotion": self.emotion,
             "content": self.content,
             "send_time": self.send_time.isoformat(),
         }

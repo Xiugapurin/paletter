@@ -2,8 +2,8 @@ from datetime import datetime
 from flask import g
 from flask_restful import Resource, reqparse
 from my_flask_app import db
-from my_flask_app.models import User, Message
-from my_flask_app.langchain.responses import get_chat_responses
+from my_flask_app.models import User, Diary, Message
+from my_flask_app.langchain.responses import get_embedding, get_chat_responses
 
 parser = reqparse.RequestParser()
 parser.add_argument("content", type=str)
@@ -42,22 +42,43 @@ class MessageListResource(Resource):
             .all()
         )
 
-        context = ""
+        chat_history_context = ""
         for message in reversed(chat_history):
-            sender = "使用者" if message.sender == "USER" else "精靈"
-            context += f"{sender}: {message.content}\n"
+            sender = "我" if message.sender == "USER" else "精靈"
+            chat_history_context += f"{sender}: {message.content}\n"
+
+        content_embedding = get_embedding(content)
+        relevant_diaries = (
+            Diary.query.filter_by(user_id=user_id)
+            .order_by(Diary.summary_embedding.cosine_distance(content_embedding))
+            .limit(3)
+            .all()
+        )
+
+        diary_context = ""
+        for i, diary in enumerate(relevant_diaries):
+            diary_context += f"線索{str(i+1)} - {diary.date.isoformat()} 的日記內容: {diary.summary}\n"
+
+        print(diary_context)
 
         user_message = Message(
-            user_id=user_id, sender="USER", content=content, send_time=datetime.now()
+            user_id=user_id,
+            sender="USER",
+            content=content,
+            emotion="None",
+            send_time=datetime.now(),
         )
         db.session.add(user_message)
 
-        ai_response_contents = get_chat_responses(content, llm_preference, context)
+        ai_response_contents, emotion = get_chat_responses(
+            content, llm_preference, chat_history_context, diary_context
+        )
         ai_messages = []
         for response in ai_response_contents:
             ai_message = Message(
                 user_id=user_id,
                 sender="AI",
+                emotion=emotion,
                 content=response,
                 send_time=datetime.now(),
             )
