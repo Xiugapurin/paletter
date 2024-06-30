@@ -5,8 +5,8 @@ from flask_restful import Api
 import firebase_admin
 from firebase_admin import credentials, auth
 from config import Config
-from .extensions import db, migrate
-from .scheduler import start_scheduler
+from .extensions import db, migrate, scheduler
+from .tasks import process_daily_diary
 from my_flask_app.resources.user import UserResource, UserListResource
 from my_flask_app.resources.diary import (
     DiaryResource,
@@ -24,6 +24,12 @@ def create_app(config_class=Config):
 
     db.init_app(app)
     migrate.init_app(app, db)
+
+    scheduler.init_app(app)
+    scheduler.add_job(
+        func=process_daily_diary, trigger="cron", hour=18, minute=21, id="interval_task"
+    )
+    scheduler.start()
 
     cred = credentials.Certificate(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"))
     firebase_admin.initialize_app(cred)
@@ -50,7 +56,5 @@ def create_app(config_class=Config):
                 g.user_id = decoded_token["uid"]
         except Exception as e:
             return jsonify({"error": str(e)}), 401
-
-    start_scheduler()
 
     return app

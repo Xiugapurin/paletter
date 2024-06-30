@@ -3,6 +3,6 @@ flask_cors
 flask_restful
 flask_migrate
 flask_sqlalchemy
+Flask-APScheduler
 firebase_admin
-apscheduler
 pgvector
