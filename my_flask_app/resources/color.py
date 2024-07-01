@@ -19,6 +19,7 @@ class ColorResource(Resource):
             "Indigo",
             "Purple",
             "Gray",
+            "White"
         ]:
             return {"error": "Invalid color."}, 400
 
@@ -70,7 +71,7 @@ class ColorListResource(Resource):
         if year == current_date.year and month == current_date.month:
             days_in_month = current_date.day
 
-        diary_list = [{"diary_id": -1, "colors": ["GRAY"]}] * (days_in_month)
+        diary_list = [{"diary_id": -1, "colors": ["White"]}] * (days_in_month)
         color_counts = {
             "Red": 0,
             "Orange": 0,
@@ -80,8 +81,8 @@ class ColorListResource(Resource):
             "Indigo": 0,
             "Purple": 0,
             "Gray": 0,
+            "White": 0
         }
-        gray_count = len(diary_list)
 
         diaries = Diary.query.filter(
             Diary.user_id == user_id,
@@ -99,7 +100,6 @@ class ColorListResource(Resource):
             colors = Color.query.filter_by(diary_id=diary.diary_id).all()
             colors_list = [c.color for c in colors]
             if colors_list:
-                gray_count -= 1
                 diary_list[day - 1] = {
                     "diary_id": diary.diary_id,
                     "colors": colors_list,
@@ -107,9 +107,7 @@ class ColorListResource(Resource):
                 for color in colors_list:
                     color_counts[color] += 1
             else:
-                color_counts["Gray"] += 1
-
-        color_counts["Gray"] += gray_count
+                color_counts["White"] += 1
 
         total_colors = sum(color_counts.values())
         if total_colors > 0:

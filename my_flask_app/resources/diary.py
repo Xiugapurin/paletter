@@ -11,16 +11,14 @@ parser = reqparse.RequestParser()
 
 class DiaryResource(Resource):
     def get(self, diary_id):
-        print(datetime.now())
         user_id = g.user_id
         if diary_id == 0:
-            today = datetime.now() + timedelta(hours=8)
+            today = datetime.now()
             today_date = today.date()
 
             diary = Diary.query.filter_by(user_id=user_id, date=today_date).first()
 
             if not diary:
-                print("Creating new diary")
                 diary = Diary(
                     user_id=user_id, date=today_date, status="EDITING", summary=""
                 )
@@ -60,6 +58,14 @@ class DiaryListResource(Resource):
     def get(self, page):
         user_id = g.user_id
 
+        try:
+            page = int(page)
+        except ValueError:
+            return {"error": "Invalid page format."}, 400
+
+        if page < 1:
+            return {"error": "Page number must be greater than or equal to 1."}, 400
+
         pagination = (
             Diary.query.filter_by(user_id=user_id)
             .order_by(Diary.date.desc())
@@ -86,35 +92,3 @@ class DiaryListResource(Resource):
         db.session.commit()
 
         return new_diary.to_dict(), 200
-
-
-class DiaryCalenderResource(Resource):
-    def get(self, year, month):
-        user_id = g.user_id
-
-        try:
-            year = int(year)
-            month = int(month)
-        except ValueError:
-            return {"error": "Invalid year or month format."}, 400
-
-        if month < 1 or month > 12:
-            return {"error": "Invalid month."}, 400
-
-        if year < 1900 or year > datetime.now().year + 1:
-            return {"error": "Invalid year."}, 400
-
-        days_in_month = monthrange(year, month)[1]
-        diary_list = [{"diary_id": -1, "color": "GRAY"} for _ in range(days_in_month)]
-
-        diaries = Diary.query.filter(
-            Diary.user_id == user_id,
-            extract("year", Diary.date) == year,
-            extract("month", Diary.date) == month,
-        ).all()
-
-        for diary in diaries:
-            day = diary.date.day
-            diary_list[day - 1] = {"diary_id": diary.diary_id, "color": diary.color}
-
-        return diary_list, 200

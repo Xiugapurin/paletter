@@ -23,7 +23,7 @@ def paint_daily_diary():
                     color = Color(
                         user_id=diary.user_id,
                         diary_id=diary.diary_id,
-                        color="Gray",
+                        color="White",
                         content=diary.content,
                     )
                     db.session.add(color)

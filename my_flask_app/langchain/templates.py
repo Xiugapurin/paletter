@@ -1,10 +1,3 @@
-language_en_template = """You are a very smart physics professor. \
-You are great at answering questions about physics in a concise and easy to understand manner. \
-When you don't know the answer to a question you admit that you don't know.
-
-Here is a question:
-{query}"""
-
 response_clue_template = """你是一個擅長分析前後文線索的專家，你需要根據給定的線索文句，判斷跟我們的問題是否相關，並將線索統整後回傳。
 以下是一則使用者發送的訊息：
 {query}
@@ -55,7 +48,7 @@ diary_to_color_template = """你是一個專業的心理學家，你擅長分析
 注意：每個段落不要超過 100 字，同時不要回傳日記以外的內容。
 限制：你最少需要挑選一個顏色，並且最多挑選不超過兩個顏色，請挑選日記中最具有代表性的段落。
 
-以下是 8 種不同的情緒所對應的顏色:
+以下是 9 種不同的情緒所對應的顏色:
 1. 憤怒暴躁: Red
 2. 快樂喜悅: Yellow
 3. 悲傷難過: Blue
@@ -63,7 +56,8 @@ diary_to_color_template = """你是一個專業的心理學家，你擅長分析
 5. 焦慮煩惱: Orange
 6. 厭惡煩躁: Green
 7. 平靜祥和: Indigo
-8. 當日記不包含任何情緒或是沒有內容時: Gray
+8. 無助委屈: Gray
+9. 當日記無法被分類為以上情緒時: White
 
 {format_instructions}
 

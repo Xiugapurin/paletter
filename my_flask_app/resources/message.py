@@ -9,12 +9,34 @@ parser = reqparse.RequestParser()
 parser.add_argument("content", type=str)
 
 
-class MessageListResource(Resource):
+class MessageResource(Resource):
     def get(self):
+        pass
+
+    def delete(self):
+        user_id = g.user_id
+        pass
+
+
+class MessageListResource(Resource):
+    def get(self, page):
         user_id = g.user_id
 
-        messages = Message.query.filter_by(user_id=user_id).all()
-        if not messages:
+        try:
+            page = int(page)
+        except ValueError:
+            return {"error": "Invalid page format."}, 400
+
+        if page < 1:
+            return {"error": "Page number must be greater than or equal to 1."}, 400
+
+        pagination = (
+            Message.query.filter_by(user_id=user_id)
+            .order_by(Message.message_id.desc())
+            .paginate(page=page, per_page=50, error_out=False)
+        )
+
+        if not pagination:
             ai_message = {
                 "message_id": "initial_message",
                 "user_id": user_id,
@@ -24,8 +46,17 @@ class MessageListResource(Resource):
             }
             return {"messages": [ai_message]}, 200
 
-        return {"messages": [message.to_dict() for message in messages]}, 200
+        messages = [message.to_dict() for message in pagination.items]
+        next_page = pagination.page + 1 if pagination.has_next else -1
 
+        return {
+            "messages": messages,
+            "next_page": next_page,
+            "total_pages": pagination.pages,
+        }, 200
+
+
+class MessageResponseResource(Resource):
     def post(self):
         args = parser.parse_args()
         content = args["content"]
