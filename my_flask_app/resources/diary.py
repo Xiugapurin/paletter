@@ -1,8 +1,6 @@
-from datetime import datetime, timedelta
-from calendar import monthrange
+from datetime import datetime
 from flask import g
 from flask_restful import Resource, reqparse
-from sqlalchemy import extract
 from my_flask_app import db
 from my_flask_app.models import Diary
 

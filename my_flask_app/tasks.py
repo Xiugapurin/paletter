@@ -10,8 +10,8 @@ def paint_daily_diary():
     yesterday = today - timedelta(days=1)
 
     with scheduler.app.app_context():
-        # diaries = Diary.query.filter_by(date=yesterday).all()
-        diaries = Diary.query.all()
+        diaries = Diary.query.filter_by(date=yesterday).all()
+        # diaries = Diary.query.all()
         for diary in diaries:
             print(diary.diary_id)
             existing_colors = Color.query.filter_by(diary_id=diary.diary_id).all()

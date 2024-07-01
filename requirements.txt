@@ -6,3 +6,7 @@ flask_sqlalchemy
 Flask-APScheduler
 firebase_admin
 pgvector
+langchain
+langchain-core
+langchain-openai
+python-dotenv
