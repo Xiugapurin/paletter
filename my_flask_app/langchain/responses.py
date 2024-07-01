@@ -10,6 +10,7 @@ from .templates import (
     response_clue_template,
     response_template,
     response_emotion_template,
+    diary_to_color_template,
     diary_to_tag_summary_template,
 )
 
@@ -59,12 +60,20 @@ def split_response_chain(content):
         "請將以下聊天的內容，根據語義和情緒轉折，切分成每段長度不超過 20 字的多段文本：\n"
         "{input}"
     )
-    model = ChatOpenAI(model="gpt-3.5-turbo-0125")
+    model = ChatOpenAI(model="gpt-4o")
     runnable = split_prompt | model | StrOutputParser()
     response = runnable.invoke({"input": content})
     messages = response.split("\n")
 
-    return [msg.strip() for msg in messages if msg.strip()]
+    processed_messages = []
+    for msg in messages:
+        msg = msg.strip()
+        if msg.endswith("。") or msg.endswith("，"):
+            msg = msg[:-1].strip()
+        if msg:
+            processed_messages.append(msg)
+
+    return processed_messages
 
 
 def get_chat_responses(
@@ -100,24 +109,7 @@ def get_chat_responses(
 def convert_diary_to_colors(diary_content):
     parser = JsonOutputParser(pydantic_object=DiaryEmotionList)
     prompt = PromptTemplate(
-        template="""你是一個專業的心理學家，你擅長分析日記中所包含的情緒。 \
-                    你需要根據使用者的日記內容分析其情緒，並挑選其代表的顏色以及對應的內容段落。 \
-                    注意：每個段落不要超過 100 字，同時不要回傳日記以外的內容。 \
-                    限制：你最少需要挑選一個顏色，並且最多挑選不超過兩個顏色，請挑選日記中最具有代表性的段落。 \
-                    以下是 8 種不同的情緒所對應的顏色: \
-                    1. 憤怒暴躁: Red \
-                    2. 快樂喜悅: Yellow \
-                    3. 悲傷難過: Blue \
-                    4. 恐懼害怕: Purple \
-                    5. 焦慮不安: Orange \
-                    6. 厭惡煩躁: Green \
-                    7. 平靜祥和: Indigo \
-                    8. 其他 (當日記不包含任何情緒或是沒有內容時): Gray \
-
-                    {format_instructions}
-
-                    {query}
-                """,
+        template=diary_to_color_template,
         input_variables=["query"],
         partial_variables={"format_instructions": parser.get_format_instructions()},
     )
@@ -125,8 +117,17 @@ def convert_diary_to_colors(diary_content):
     chain = prompt | model | parser
     output = chain.invoke({"query": diary_content})
 
-    print(output)
-    return output["colors"][:2]
+    unique_colors = []
+    seen_colors = set()
+
+    for color_obj in output["colors"]:
+        if color_obj["color"] not in seen_colors:
+            seen_colors.add(color_obj["color"])
+            unique_colors.append(color_obj)
+        if len(unique_colors) >= 2:
+            break
+
+    return unique_colors
 
 
 def convert_diary_to_summary(diary_content):

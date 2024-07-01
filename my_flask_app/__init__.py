@@ -6,14 +6,11 @@ import firebase_admin
 from firebase_admin import credentials, auth
 from config import Config
 from .extensions import db, migrate, scheduler
-from .tasks import process_daily_diary
+from .tasks import paint_daily_diary, refresh_daily_diary
 from my_flask_app.resources.user import UserResource, UserListResource
-from my_flask_app.resources.diary import (
-    DiaryResource,
-    DiaryListResource,
-    DiaryCalenderResource,
-)
+from my_flask_app.resources.diary import DiaryResource, DiaryListResource
 from my_flask_app.resources.message import MessageListResource
+from my_flask_app.resources.color import ColorResource, ColorListResource
 
 
 def create_app(config_class=Config):
@@ -27,7 +24,10 @@ def create_app(config_class=Config):
 
     scheduler.init_app(app)
     scheduler.add_job(
-        func=process_daily_diary, trigger="cron", hour=0, minute=0, id="interval_task"
+        func=paint_daily_diary, trigger="cron", hour=0, minute=0, id="daily_paint"
+    )
+    scheduler.add_job(
+        func=refresh_daily_diary, trigger="cron", hour=6, minute=0, id="daily_refresh"
     )
     scheduler.start()
 
@@ -39,7 +39,8 @@ def create_app(config_class=Config):
     api.add_resource(UserListResource, "/api/users")
     api.add_resource(DiaryResource, "/api/diary/<int:diary_id>")
     api.add_resource(DiaryListResource, "/api/diaries/<int:page>")
-    api.add_resource(DiaryCalenderResource, "/api/diaries/<int:year>/<int:month>")
+    api.add_resource(ColorResource, "/api/color/<string:color>")
+    api.add_resource(ColorListResource, "/api/colors/<int:year>/<int:month>")
     api.add_resource(MessageListResource, "/api/messages")
 
     @app.before_request

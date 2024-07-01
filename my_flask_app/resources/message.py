@@ -15,7 +15,6 @@ class MessageListResource(Resource):
 
         messages = Message.query.filter_by(user_id=user_id).all()
         if not messages:
-            # 沒有訊息時，回傳提示訊息
             ai_message = {
                 "message_id": "initial_message",
                 "user_id": user_id,
@@ -51,7 +50,7 @@ class MessageListResource(Resource):
         relevant_diaries = (
             Diary.query.filter_by(user_id=user_id)
             .order_by(Diary.summary_embedding.cosine_distance(content_embedding))
-            .limit(3)
+            .limit(5)
             .all()
         )
 

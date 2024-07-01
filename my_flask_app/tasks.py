@@ -4,8 +4,8 @@ from .models import Diary, Color
 from .langchain.responses import convert_diary_to_colors, convert_diary_to_summary
 
 
-def process_daily_diary():
-    print("Processing")
+def paint_daily_diary():
+    print("Paint diary")
     today = datetime.now().date()
     yesterday = today - timedelta(days=1)
 
@@ -13,8 +13,12 @@ def process_daily_diary():
         # diaries = Diary.query.filter_by(date=yesterday).all()
         diaries = Diary.query.all()
         for diary in diaries:
+            print(diary.diary_id)
             existing_colors = Color.query.filter_by(diary_id=diary.diary_id).all()
+            print(existing_colors)
+
             if not existing_colors:
+                print("painting diary: ", diary.diary_id)
                 if len(diary.content) < 20:
                     color = Color(
                         user_id=diary.user_id,
@@ -43,5 +47,14 @@ def process_daily_diary():
                     diary.summary_embedding = summary_item["summary_embedding"]
                 else:
                     diary.tag = "其他"
+
+        db.session.commit()
+
+
+def refresh_daily_diary():
+    with scheduler.app.app_context():
+        diaries = Diary.query.filter_by(status="PAINTING").all()
+        for diary in diaries:
+            diary.status = "COMPLETED"
 
         db.session.commit()
