@@ -9,7 +9,9 @@ from .prompts import create_prompt_template
 from .templates import (
     response_clue_template,
     response_template,
+    response_split_template,
     response_emotion_template,
+    diary_html_to_text_template,
     diary_to_color_template,
     diary_to_tag_summary_template,
 )
@@ -17,6 +19,14 @@ from .templates import (
 
 class MessageEmotion(BaseModel):
     emotion: str = Field(description="The emotion of the message")
+
+
+class MessageContent(BaseModel):
+    content: str = Field(description="The content of the message")
+
+
+class MessageList(BaseModel):
+    messages: List[MessageContent]
 
 
 class DiaryEmotion(BaseModel):
@@ -56,39 +66,51 @@ def get_emotion(content):
 
 
 def split_response_chain(content):
-    split_prompt = create_prompt_template(
-        "請將以下聊天的內容，根據語義和情緒轉折，切分成每段長度不超過 20 字的多段文本：\n"
-        "{input}"
+    parser = JsonOutputParser(pydantic_object=MessageList)
+    prompt = PromptTemplate(
+        template=response_split_template,
+        input_variables=["query"],
+        partial_variables={"format_instructions": parser.get_format_instructions()},
     )
     model = ChatOpenAI(model="gpt-4o")
-    runnable = split_prompt | model | StrOutputParser()
-    response = runnable.invoke({"input": content})
-    messages = response.split("\n")
+    chain = prompt | model | parser
+    output = chain.invoke({"query": content})
 
     processed_messages = []
-    for msg in messages:
-        msg = msg.strip()
+    for msg in output["messages"]:
+        msg = msg["content"].strip()
         if msg.endswith("。") or msg.endswith("，"):
             msg = msg[:-1].strip()
         if msg:
             processed_messages.append(msg)
+    print(processed_messages)
 
     return processed_messages
 
 
 def get_chat_responses(
-    user_message, llm_preference, chat_history_context, diary_context
+    user_message,
+    llm_preference,
+    chat_history_context,
+    diary_context,
+    today_diary_context,
 ):
     model = ChatOpenAI(model="gpt-4o")
     today = datetime.now().date().isoformat()
     clue_prompt = PromptTemplate(
         template=response_clue_template,
         input_variables=["query"],
-        partial_variables={"diary_context": diary_context, "date": today},
+        partial_variables={
+            "diary_context": diary_context,
+            "today_diary_context": today_diary_context,
+            "date": today,
+        },
     )
     runnable = clue_prompt | model | StrOutputParser()
     clue = runnable.invoke({"query": user_message})
 
+    if llm_preference == "":
+        llm_preference = "友善體貼且幽默"
     system_template = response_template.format(
         llm_preference=llm_preference,
         chat_history_context=chat_history_context,
@@ -104,6 +126,18 @@ def get_chat_responses(
     responses = split_response_chain(content)
 
     return responses, emotion
+
+
+def convert_diary_html_to_text(diary_html):
+    prompt = PromptTemplate(
+        template=diary_html_to_text_template,
+        input_variables=["query"],
+    )
+    model = ChatOpenAI(model="gpt-4o")
+    runnable = prompt | model | StrOutputParser()
+    text = runnable.invoke({"query": diary_html})
+
+    return text
 
 
 def convert_diary_to_colors(diary_content):

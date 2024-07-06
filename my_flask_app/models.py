@@ -11,7 +11,7 @@ class User(db.Model):
     name = db.Column(db.String(100), nullable=False)
     llm_preference = db.Column(db.String(255))
     profile_picture = db.Column(db.Text)
-    created_time = db.Column(db.DateTime, default=datetime.now)
+    created_time = db.Column(db.DateTime, default=datetime.now())
     last_login = db.Column(db.DateTime)
 
     def to_dict(self):
@@ -19,8 +19,8 @@ class User(db.Model):
             "name": self.name,
             "llm_preference": self.llm_preference,
             "profile_picture": self.profile_picture,
-            "created_time": self.created_time.isoformat(),
-            "last_login": self.last_login.isoformat() if self.last_login else None,
+            # "created_time": self.created_time.isoformat(),
+            # "last_login": self.last_login.isoformat() if self.last_login else None,
         }
 
 
@@ -36,7 +36,7 @@ class Diary(db.Model):
     date = db.Column(
         db.Date,
         nullable=False,
-        default=lambda: (datetime.now() + timedelta(hours=8)).date(),
+        default=datetime.now().date(),
     )
     content = db.Column(db.Text, nullable=False, default="")
     media = db.Column(JSONB)
@@ -50,7 +50,6 @@ class Diary(db.Model):
             "diary_id": self.diary_id,
             "date": self.date.isoformat(),
             "content": self.content,
-            "media": self.media,
             "status": self.status,
             "tag": self.tag,
         }

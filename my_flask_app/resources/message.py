@@ -3,7 +3,11 @@ from flask import g
 from flask_restful import Resource, reqparse
 from my_flask_app import db
 from my_flask_app.models import User, Diary, Message
-from my_flask_app.langchain.responses import get_embedding, get_chat_responses
+from my_flask_app.langchain.responses import (
+    get_embedding,
+    get_chat_responses,
+    convert_diary_html_to_text,
+)
 
 parser = reqparse.RequestParser()
 parser.add_argument("content", type=str)
@@ -71,7 +75,6 @@ class MessageResponseResource(Resource):
             .limit(10)
             .all()
         )
-
         chat_history_context = ""
         for message in reversed(chat_history):
             sender = "我" if message.sender == "USER" else "精靈"
@@ -84,12 +87,17 @@ class MessageResponseResource(Resource):
             .limit(5)
             .all()
         )
-
         diary_context = ""
         for i, diary in enumerate(relevant_diaries):
             diary_context += f"線索{str(i+1)} - {diary.date.isoformat()} 的日記內容: {diary.summary}\n"
 
         print(diary_context)
+
+        today = datetime.now().date()
+        today_diary = Diary.query.filter_by(user_id=user_id, date=today).first()
+        today_diary_context = "今天沒有日記"
+        if today_diary:
+            today_diary_context = convert_diary_html_to_text(today_diary.content)
 
         user_message = Message(
             user_id=user_id,
@@ -101,7 +109,11 @@ class MessageResponseResource(Resource):
         db.session.add(user_message)
 
         ai_response_contents, emotion = get_chat_responses(
-            content, llm_preference, chat_history_context, diary_context
+            content,
+            llm_preference,
+            chat_history_context,
+            diary_context,
+            today_diary_context,
         )
         ai_messages = []
         for response in ai_response_contents:
@@ -118,5 +130,5 @@ class MessageResponseResource(Resource):
         db.session.commit()
 
         return {
-            "ai_messages": [msg.to_dict() for msg in ai_messages],
+            "ai_messages": [msg.to_dict() for msg in ai_messages][::-1],
         }, 200

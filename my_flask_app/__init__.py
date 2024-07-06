@@ -24,7 +24,7 @@ def create_app(config_class=Config):
 
     scheduler.init_app(app)
     scheduler.add_job(
-        func=paint_daily_diary, trigger="cron", hour=0, minute=0, id="daily_paint"
+        func=paint_daily_diary, trigger="cron", hour=14, minute=52, id="daily_paint"
     )
     scheduler.add_job(
         func=refresh_daily_diary, trigger="cron", hour=6, minute=0, id="daily_refresh"

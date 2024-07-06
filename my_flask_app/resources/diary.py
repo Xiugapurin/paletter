@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import g
 from flask_restful import Resource, reqparse
 from my_flask_app import db
-from my_flask_app.models import Diary
+from my_flask_app.models import Diary, Color
 
 parser = reqparse.RequestParser()
 
@@ -11,14 +11,17 @@ class DiaryResource(Resource):
     def get(self, diary_id):
         user_id = g.user_id
         if diary_id == 0:
-            today = datetime.now()
-            today_date = today.date()
+            today = datetime.now().date()
 
-            diary = Diary.query.filter_by(user_id=user_id, date=today_date).first()
+            diary = Diary.query.filter_by(user_id=user_id, date=today).first()
 
             if not diary:
                 diary = Diary(
-                    user_id=user_id, date=today_date, status="EDITING", summary=""
+                    user_id=user_id,
+                    date=today,
+                    status="EDITING",
+                    tag="",
+                    summary="",
                 )
                 db.session.add(diary)
                 db.session.commit()
@@ -33,7 +36,14 @@ class DiaryResource(Resource):
         user_id = g.user_id
         parser.add_argument("content", type=str, required=True, help="Diary content")
         parser.add_argument("media", type=dict, required=False, help="Diary media")
-        diary = Diary.query.filter_by(user_id=user_id, diary_id=diary_id).first_or_404()
+
+        if diary_id == 0:
+            today = datetime.now().date()
+            diary = Diary.query.filter_by(user_id=user_id, date=today).first()
+        else:
+            diary = Diary.query.filter_by(
+                user_id=user_id, diary_id=diary_id
+            ).first_or_404()
 
         args = parser.parse_args()
         diary.content = args.get("content")
@@ -70,7 +80,17 @@ class DiaryListResource(Resource):
             .paginate(page=page, per_page=20, error_out=False)
         )
 
-        diaries = [diary.to_limited_dict() for diary in pagination.items]
+        diaries = []
+        for diary in pagination.items:
+            color_items = Color.query.filter_by(
+                user_id=user_id, diary_id=diary.diary_id
+            ).all()
+            color_list = [c.color for c in color_items]
+            diary.to_limited_dict()
+            diary_dict = diary.to_limited_dict()
+            diary_dict["colors"] = color_list
+            diaries.append(diary_dict)
+
         next_page = pagination.page + 1 if pagination.has_next else -1
 
         return {

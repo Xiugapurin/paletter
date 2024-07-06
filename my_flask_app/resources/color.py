@@ -19,7 +19,7 @@ class ColorResource(Resource):
             "Indigo",
             "Purple",
             "Gray",
-            "White"
+            "White",
         ]:
             return {"error": "Invalid color."}, 400
 
@@ -81,7 +81,7 @@ class ColorListResource(Resource):
             "Indigo": 0,
             "Purple": 0,
             "Gray": 0,
-            "White": 0
+            "White": 0,
         }
 
         diaries = Diary.query.filter(
@@ -106,8 +106,6 @@ class ColorListResource(Resource):
                 }
                 for color in colors_list:
                     color_counts[color] += 1
-            else:
-                color_counts["White"] += 1
 
         total_colors = sum(color_counts.values())
         if total_colors > 0:

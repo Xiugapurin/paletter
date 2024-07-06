@@ -15,7 +15,7 @@ class UserResource(Resource):
 
         user = User.query.filter_by(user_id=user_id).first()
 
-        if user is None:
+        if not user:
             user = User(user_id=user_id, name="", llm_preference="", profile_picture="")
             db.session.add(user)
             db.session.commit()
@@ -33,14 +33,6 @@ class UserResource(Resource):
         db.session.commit()
 
         return user.to_dict()
-
-    # def delete(self):
-    #     user_id = g.user_id
-    #     user = User.query.get_or_404(user_id)
-    #     db.session.delete(user)
-    #     db.session.commit()
-
-    #     return "", 200
 
 
 class UserListResource(Resource):

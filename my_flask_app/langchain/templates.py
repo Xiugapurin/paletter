@@ -5,7 +5,8 @@ response_clue_template = """你是一個擅長分析前後文線索的專家，�
 以下是可能相關的線索：
 {diary_context}
 
-今天的日期是 {date}。
+今天的日期是 {date}，使用者今天寫的日記內容如下：
+{today_diary_context}
 
 若是線索完全和訊息無關，請回傳「無線索」；否則請將線索重新整理，判斷使用者的意圖，擷取重點改寫後回傳。
 注意：你只需要輸出純文字，不必輸出 markdown 語法。同時請將線索簡短扼要的總結成兩句話以內再回傳。
@@ -28,12 +29,22 @@ response_template = """以下對話請以繁體中文應答，回答的長度請
 以下是我在聊天室中發送的訊息：
 """
 
+response_split_template = """你是一個擅長聊天的專家，你必須將一則訊息切分成一到數段。
+以下請你根據聊天室文字訊息的語氣轉折，將訊息分成數段，並將每段文字放入 array 中回傳給我。
+注意：請不要加上原始文字以外的內容，例如列表或是 markdown 語法，請處理原始文本內容即可。
+
+{format_instructions}
+
+以下是訊息內容：
+{query}
+"""
+
 response_emotion_template = """你是一個擅長判讀文字情緒的專家，你必須判斷給定聊天室的訊息屬於什麼情緒。
 
 以下是可以輸出的 emotion 名稱以及說明：
 1. Happy: 當訊息內容開心愉悅時，輸出此 emotion
 2. Sad: 當訊息內容難過或是感到遺憾時，輸出此 emotion
-3. Other: 當訊息內容無法歸類為以上兩者時，輸出此 emotion
+3. None: 當訊息內容無法歸類為以上兩者時，輸出此 emotion
 
 請判斷聊天室的訊息屬於什麼情緒，並將其轉為 JSON 格式放置於 emotion 欄位中。
 
@@ -62,6 +73,14 @@ diary_to_color_template = """你是一個專業的心理學家，你擅長分析
 {format_instructions}
 
 若是日記中的顏色有重複，你可以將其合併，以下是日記的內容：
+{query}
+"""
+
+diary_html_to_text_template = """你是一個擅長解析 HTML 的助手，你需要將以下 HTML 中的文本內容完整擷取出來。
+若以下內容並不包含 HTML 標籤，你只需要直接回傳原始文本即可。
+注意：你只需要輸出純文字，不必輸出 markdown 語法，並且不要輸出 HTML 內容以外的任何文字。
+
+以下是 HTML 內容：
 {query}
 """
 
