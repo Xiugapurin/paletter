@@ -7,10 +7,10 @@ from firebase_admin import credentials, auth
 from config import Config
 from .extensions import db, migrate, scheduler
 from .tasks import paint_daily_diary, refresh_daily_diary
-from my_flask_app.resources.user import UserResource, UserListResource
-from my_flask_app.resources.diary import DiaryResource, DiaryListResource
-from my_flask_app.resources.message import MessageListResource, MessageResponseResource
-from my_flask_app.resources.color import ColorResource, ColorListResource
+from src.resources.user import UserResource, UserListResource
+from src.resources.diary import DiaryResource, DiaryListResource
+from src.resources.message import MessageListResource, MessageResponseResource
+from src.resources.color import ColorResource, ColorListResource
 
 
 def create_app(config_class=Config):

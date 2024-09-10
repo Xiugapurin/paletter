@@ -1,8 +1,8 @@
 from datetime import datetime
 from flask import g
 from flask_restful import Resource, reqparse
-from my_flask_app import db
-from my_flask_app.models import Diary, Color
+from src import db
+from src.models import Diary, Color
 
 parser = reqparse.RequestParser()
 

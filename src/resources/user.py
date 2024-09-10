@@ -1,7 +1,7 @@
 from flask import g
 from flask_restful import Resource, reqparse
-from my_flask_app.extensions import db
-from my_flask_app.models import User
+from src.extensions import db
+from src.models import User
 
 parser = reqparse.RequestParser()
 parser.add_argument("name", type=str, help="Name of the user")

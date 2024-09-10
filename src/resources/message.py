@@ -1,9 +1,9 @@
 from datetime import datetime
 from flask import g
 from flask_restful import Resource, reqparse
-from my_flask_app import db
-from my_flask_app.models import User, Diary, Message
-from my_flask_app.langchain.responses import (
+from src import db
+from src.models import User, Diary, Message
+from src.langchain.responses import (
     get_embedding,
     get_chat_responses,
     convert_diary_html_to_text,

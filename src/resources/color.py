@@ -3,7 +3,7 @@ from calendar import monthrange
 from flask import g
 from flask_restful import Resource
 from sqlalchemy import extract
-from my_flask_app.models import Diary, Color
+from src.models import Diary, Color
 
 
 class ColorResource(Resource):

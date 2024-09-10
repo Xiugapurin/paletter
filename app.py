@@ -1,4 +1,4 @@
-from my_flask_app import create_app
+from src import create_app
 
 app = create_app()
 
