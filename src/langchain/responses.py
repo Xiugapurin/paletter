@@ -8,7 +8,8 @@ from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 from .prompts import create_prompt_template
 from .templates import (
     response_clue_template,
-    response_template,
+    basic_response_template,
+    premium_response_template,
     response_split_template,
     response_emotion_template,
     diary_html_to_text_template,
@@ -50,7 +51,7 @@ def get_embedding(query):
 
 
 def get_emotion(content):
-    model = ChatOpenAI(model="gpt-4o")
+    model = ChatOpenAI(model="gpt-3.5-turbo")
 
     parser = JsonOutputParser(pydantic_object=MessageEmotion)
     prompt = PromptTemplate(
@@ -92,31 +93,43 @@ def get_chat_responses(
     user_message,
     llm_preference,
     chat_history_context,
-    diary_context,
+    relevant_diary_context,
     today_diary_context,
+    membership_level,
 ):
-    model = ChatOpenAI(model="gpt-4o")
     today = datetime.now().date().isoformat()
-    clue_prompt = PromptTemplate(
-        template=response_clue_template,
-        input_variables=["query"],
-        partial_variables={
-            "diary_context": diary_context,
-            "today_diary_context": today_diary_context,
-            "date": today,
-        },
-    )
-    runnable = clue_prompt | model | StrOutputParser()
-    clue = runnable.invoke({"query": user_message})
+    llm_preference = llm_preference if llm_preference else "友善體貼且幽默"
 
-    if llm_preference == "":
-        llm_preference = "友善體貼且幽默"
-    system_template = response_template.format(
-        llm_preference=llm_preference,
-        chat_history_context=chat_history_context,
-        clue=clue,
-        date=today,
-    )
+    if membership_level == "Basic":
+        model = ChatOpenAI(model="gpt-3.5-turbo")
+
+        system_template = basic_response_template.format(
+            llm_preference=llm_preference,
+            chat_history_context=chat_history_context,
+        )
+
+    if membership_level == "Premium":
+        model = ChatOpenAI(model="gpt-4o")
+
+        clue_prompt = PromptTemplate(
+            template=response_clue_template,
+            input_variables=["query"],
+            partial_variables={
+                "relevant_diary_context": relevant_diary_context,
+                "today_diary_context": today_diary_context,
+                "date": today,
+            },
+        )
+        runnable = clue_prompt | model | StrOutputParser()
+        clue = runnable.invoke({"query": user_message})
+
+        system_template = premium_response_template.format(
+            llm_preference=llm_preference,
+            chat_history_context=chat_history_context,
+            clue=clue,
+            date=today,
+        )
+
     print(system_template)
     prompt = create_prompt_template(system_template)
     runnable = prompt | model | StrOutputParser()

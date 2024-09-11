@@ -12,11 +12,19 @@ parser.add_argument("profile_picture", type=str, help="Profile picture URL of th
 class UserResource(Resource):
     def get(self):
         user_id = g.user_id
+        print(user_id)
 
         user = User.query.filter_by(user_id=user_id).first()
 
+        # TODO: Design credit rule for new users
         if not user:
-            user = User(user_id=user_id, name="", llm_preference="", profile_picture="")
+            user = User(
+                user_id=user_id,
+                name="",
+                llm_preference="",
+                profile_picture="",
+                credits_limit=10,
+            )
             db.session.add(user)
             db.session.commit()
             print("user created: ", user_id)

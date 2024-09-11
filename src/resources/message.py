@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import g
 from flask_restful import Resource, reqparse
 from src import db
-from src.models import User, Diary, Message
+from src.models import User, Diary, Diary_Chunk, Message
 from src.langchain.responses import (
     get_embedding,
     get_chat_responses,
@@ -39,8 +39,9 @@ class MessageListResource(Resource):
             .order_by(Message.message_id.desc())
             .paginate(page=page, per_page=50, error_out=False)
         )
+        print(pagination.items)
 
-        if not pagination:
+        if not pagination.items:
             ai_message = {
                 "message_id": "initial_message",
                 "user_id": user_id,
@@ -68,6 +69,20 @@ class MessageResponseResource(Resource):
 
         user = User.query.get_or_404(user_id)
         llm_preference = user.llm_preference
+        membership_level = user.membership_level
+
+        relevant_diary_context = ""
+        if membership_level == "Premium" or membership_level == "VIP":
+            content_embedding = get_embedding(content)
+            relevant_diaries = (
+                Diary.query.filter_by(user_id=user_id)
+                .order_by(Diary.summary_embedding.cosine_distance(content_embedding))
+                .limit(5)
+                .all()
+            )
+
+            for i, diary in enumerate(relevant_diaries):
+                relevant_diary_context += f"線索{str(i+1)} - {diary.date.isoformat()} 的日記內容: {diary.summary}\n"
 
         chat_history = (
             Message.query.filter_by(user_id=user_id)
@@ -80,19 +95,6 @@ class MessageResponseResource(Resource):
             sender = "我" if message.sender == "USER" else "精靈"
             chat_history_context += f"{sender}: {message.content}\n"
 
-        content_embedding = get_embedding(content)
-        relevant_diaries = (
-            Diary.query.filter_by(user_id=user_id)
-            .order_by(Diary.summary_embedding.cosine_distance(content_embedding))
-            .limit(5)
-            .all()
-        )
-        diary_context = ""
-        for i, diary in enumerate(relevant_diaries):
-            diary_context += f"線索{str(i+1)} - {diary.date.isoformat()} 的日記內容: {diary.summary}\n"
-
-        print(diary_context)
-
         today = datetime.now().date()
         today_diary = Diary.query.filter_by(user_id=user_id, date=today).first()
         today_diary_context = "今天沒有日記"
@@ -103,7 +105,6 @@ class MessageResponseResource(Resource):
             user_id=user_id,
             sender="USER",
             content=content,
-            emotion="None",
             send_time=datetime.now(),
         )
         db.session.add(user_message)
@@ -112,15 +113,16 @@ class MessageResponseResource(Resource):
             content,
             llm_preference,
             chat_history_context,
-            diary_context,
+            relevant_diary_context,
             today_diary_context,
+            membership_level,
         )
+
         ai_messages = []
         for response in ai_response_contents:
             ai_message = Message(
                 user_id=user_id,
                 sender="AI",
-                emotion=emotion,
                 content=response,
                 send_time=datetime.now(),
             )
@@ -129,6 +131,7 @@ class MessageResponseResource(Resource):
 
         db.session.commit()
 
+        # TODO: add emotion
         return {
             "ai_messages": [msg.to_dict() for msg in ai_messages][::-1],
         }, 200
