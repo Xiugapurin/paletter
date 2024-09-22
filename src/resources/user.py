@@ -23,7 +23,7 @@ class UserResource(Resource):
                 name="",
                 llm_preference="",
                 profile_picture="",
-                credits_limit=10,
+                credit_limit=10,
             )
             db.session.add(user)
             db.session.commit()

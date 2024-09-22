@@ -11,11 +11,11 @@ class User(db.Model):
     name = db.Column(db.String(100), nullable=False)
     llm_preference = db.Column(db.String(255))
     profile_picture = db.Column(db.Text)
-    membership_level = db.Column(db.String(20), default="Basic")
-    credit_limit = db.Column(db.Integer, default=0)
-    has_completed_diary = db.Column(db.Boolean, default=False)
-    is_trial = db.Column(db.Boolean, default=True)
-    created_time = db.Column(db.DateTime, default=datetime.now())
+    membership_level = db.Column(db.String(15), default="Basic", nullable=False)
+    credit_limit = db.Column(db.Integer, default=0, nullable=False)
+    has_completed_diary = db.Column(db.Boolean, default=False, nullable=False)
+    is_trial = db.Column(db.Boolean, default=True, nullable=False)
+    created_time = db.Column(db.DateTime, default=datetime.now(), nullable=False)
     last_login = db.Column(db.DateTime)
 
     def to_dict(self):
@@ -41,11 +41,12 @@ class Diary(db.Model):
         nullable=False,
     )
     date = db.Column(db.Date, default=date.today, nullable=False)
-    content = db.Column(db.Text, nullable=False)
+    content = db.Column(db.Text, default="", nullable=False)
     media = db.Column(JSONB)
-    status = db.Column(db.String(20), nullable=False)
-    type = db.Column(db.String(20), nullable=False)
-    summary = db.Column(db.String(255))
+    status = db.Column(db.String(15), nullable=False)
+    type = db.Column(db.String(15), default="")
+    summary = db.Column(db.String(255), default="")
+    tag = db.Column(db.String(63), default="")
 
     def to_dict(self):
         return {
@@ -55,6 +56,7 @@ class Diary(db.Model):
             "status": self.status,
             "type": self.type,
             "summary": self.summary,
+            "tag": self.tag,
         }
 
     def to_limited_dict(self):
@@ -62,27 +64,6 @@ class Diary(db.Model):
             "diary_id": self.diary_id,
             "date": self.date.isoformat(),
             "status": self.status,
-        }
-
-
-class Diary_Chunk(db.Model):
-    __tablename__ = "diary_chunks"
-
-    chunk_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    diary_id = db.Column(
-        db.Integer,
-        db.ForeignKey("diaries.diary_id", ondelete="CASCADE"),
-        nullable=False,
-    )
-    user_id = db.Column(db.String(50), nullable=False)
-    chunk_content = db.Column(db.Text, nullable=False)
-    embedding = db.Column(Vector(1536))
-
-    def to_dict(self):
-        return {
-            "chunk_id": self.chunk_id,
-            "diary_id": self.diary_id,
-            "chunk_content": self.chunk_content,
         }
 
 
@@ -98,7 +79,7 @@ class Color(db.Model):
     )
     color = db.Column(db.String(50), nullable=False)
     type = db.Column(db.String(20))
-    content = db.Column(db.Text, nullable=False)
+    content = db.Column(db.Text, default="", nullable=False)
 
     def to_dict(self):
         return {
@@ -129,4 +110,27 @@ class Message(db.Model):
             "sender": self.sender,
             "content": self.content,
             "send_time": self.send_time.isoformat(),
+        }
+
+
+class Knowledge(db.Model):
+    __tablename__ = "knowledge"
+
+    knowledge_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(
+        db.String(50),
+        db.ForeignKey("users.user_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    date = db.Column(db.Date, default=date.today, nullable=False)
+    owner = db.Column(db.String(15), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    is_activate = db.Column(db.Boolean, default=True, nullable=False)
+    embedding = db.Column(Vector(1536))
+
+    def to_dict(self):
+        return {
+            "chunk_id": self.chunk_id,
+            "diary_id": self.diary_id,
+            "chunk_content": self.chunk_content,
         }

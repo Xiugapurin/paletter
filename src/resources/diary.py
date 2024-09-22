@@ -16,13 +16,7 @@ class DiaryResource(Resource):
             diary = Diary.query.filter_by(user_id=user_id, date=today).first()
 
             if not diary:
-                diary = Diary(
-                    user_id=user_id,
-                    date=today,
-                    status="EDITING",
-                    tag="",
-                    summary="",
-                )
+                diary = Diary(user_id=user_id, status="EDITING")
                 db.session.add(diary)
                 db.session.commit()
 

@@ -3,8 +3,8 @@ from typing import List
 from datetime import datetime
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.prompts import PromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
+from pydantic import BaseModel, Field
 from .prompts import create_prompt_template
 from .templates import (
     response_clue_template,
@@ -51,7 +51,7 @@ def get_embedding(query):
 
 
 def get_emotion(content):
-    model = ChatOpenAI(model="gpt-3.5-turbo")
+    model = ChatOpenAI(model="gpt-4o-mini-2024-07-18")
 
     parser = JsonOutputParser(pydantic_object=MessageEmotion)
     prompt = PromptTemplate(
@@ -66,6 +66,38 @@ def get_emotion(content):
     return output["emotion"]
 
 
+# def split_response_chain(content):
+#     messages = []
+#     current_sentence = ""
+#     marks = ["。", "？", "！", ".", "?", "!"]
+
+#     def remove_mark(sentence):
+#         if sentence and sentence[-1] in marks:
+#             return sentence[:-1].strip()
+#         return sentence.strip()
+
+#     for i, text in enumerate(content):
+#         if len(content) - i < 12:
+#             current_sentence += content[i:]
+#             sentence = remove_mark(current_sentence)
+#             messages.append(sentence)
+#             break
+
+#         if text not in marks:
+#             current_sentence += text
+#             continue
+
+#         if len(current_sentence) > 12:
+#             sentence = remove_mark(current_sentence)
+#             messages.append(sentence)
+#             current_sentence = ""
+#             continue
+
+#         current_sentence += text
+
+#     return messages
+
+
 def split_response_chain(content):
     parser = JsonOutputParser(pydantic_object=MessageList)
     prompt = PromptTemplate(
@@ -73,24 +105,24 @@ def split_response_chain(content):
         input_variables=["query"],
         partial_variables={"format_instructions": parser.get_format_instructions()},
     )
-    model = ChatOpenAI(model="gpt-4o")
+    model = ChatOpenAI(model="gpt-4o-mini")
     chain = prompt | model | parser
     output = chain.invoke({"query": content})
 
     processed_messages = []
     for msg in output["messages"]:
-        msg = msg["content"].strip()
+        msg = msg["content"]
         if msg.endswith("。") or msg.endswith("，"):
-            msg = msg[:-1].strip()
+            msg = msg[:-1]
         if msg:
-            processed_messages.append(msg)
-    print(processed_messages)
+            processed_messages.append(msg.strip())
 
     return processed_messages
 
 
 def get_chat_responses(
     user_message,
+    user_name,
     llm_preference,
     chat_history_context,
     relevant_diary_context,
@@ -98,13 +130,25 @@ def get_chat_responses(
     membership_level,
 ):
     today = datetime.now().date().isoformat()
+    date_time = datetime.now().strftime("%m-%d 的 %H:%M")
     llm_preference = llm_preference if llm_preference else "友善體貼且幽默"
+    chat_history_context = (
+        chat_history_context
+        if chat_history_context
+        else "沒有任何聊天記錄，請試著向朋友問好哦"
+    )
 
     if membership_level == "Basic":
-        model = ChatOpenAI(model="gpt-3.5-turbo")
+        model = ChatOpenAI(model="gpt-4o-mini-2024-07-18")
+
+        # system_template = basic_response_template.format(
+        #     llm_preference=llm_preference,
+        #     chat_history_context=chat_history_context,
+        # )
 
         system_template = basic_response_template.format(
-            llm_preference=llm_preference,
+            date_time=date_time,
+            user_name=user_name,
             chat_history_context=chat_history_context,
         )
 

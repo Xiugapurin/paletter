@@ -2,11 +2,10 @@ from datetime import datetime
 from flask import g
 from flask_restful import Resource, reqparse
 from src import db
-from src.models import User, Diary, Diary_Chunk, Message
+from src.models import User, Diary, Message
 from src.langchain.responses import (
     get_embedding,
     get_chat_responses,
-    convert_diary_html_to_text,
 )
 
 parser = reqparse.RequestParser()
@@ -36,10 +35,9 @@ class MessageListResource(Resource):
 
         pagination = (
             Message.query.filter_by(user_id=user_id)
-            .order_by(Message.message_id.desc())
+            .order_by(Message.message_id)
             .paginate(page=page, per_page=50, error_out=False)
         )
-        print(pagination.items)
 
         if not pagination.items:
             ai_message = {
@@ -69,6 +67,7 @@ class MessageResponseResource(Resource):
 
         user = User.query.get_or_404(user_id)
         llm_preference = user.llm_preference
+        user_name = user.name
         membership_level = user.membership_level
 
         relevant_diary_context = ""
@@ -92,14 +91,14 @@ class MessageResponseResource(Resource):
         )
         chat_history_context = ""
         for message in reversed(chat_history):
-            sender = "我" if message.sender == "USER" else "精靈"
+            sender = "朋友" if message.sender == "USER" else "波波"
             chat_history_context += f"{sender}: {message.content}\n"
 
         today = datetime.now().date()
         today_diary = Diary.query.filter_by(user_id=user_id, date=today).first()
         today_diary_context = "今天沒有日記"
         if today_diary:
-            today_diary_context = convert_diary_html_to_text(today_diary.content)
+            today_diary_context = today_diary.content
 
         user_message = Message(
             user_id=user_id,
@@ -111,6 +110,7 @@ class MessageResponseResource(Resource):
 
         ai_response_contents, emotion = get_chat_responses(
             content,
+            user_name,
             llm_preference,
             chat_history_context,
             relevant_diary_context,
@@ -133,5 +133,6 @@ class MessageResponseResource(Resource):
 
         # TODO: add emotion
         return {
-            "ai_messages": [msg.to_dict() for msg in ai_messages][::-1],
+            "ai_messages": [msg.to_dict() for msg in ai_messages],
+            "emotion": emotion,
         }, 200
