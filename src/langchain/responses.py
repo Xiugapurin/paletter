@@ -51,7 +51,7 @@ def get_embedding(query):
 
 
 def get_emotion(content):
-    model = ChatOpenAI(model="gpt-4o-mini-2024-07-18")
+    model = ChatOpenAI(model="gpt-4o-mini")
 
     parser = JsonOutputParser(pydantic_object=MessageEmotion)
     prompt = PromptTemplate(
@@ -139,7 +139,7 @@ def get_chat_responses(
     )
 
     if membership_level == "Basic":
-        model = ChatOpenAI(model="gpt-4o-mini-2024-07-18")
+        model = ChatOpenAI(model="gpt-4o-mini")
 
         # system_template = basic_response_template.format(
         #     llm_preference=llm_preference,
@@ -179,7 +179,8 @@ def get_chat_responses(
     runnable = prompt | model | StrOutputParser()
     content = runnable.invoke({"input": user_message})
 
-    emotion = get_emotion(content)
+    # emotion = get_emotion(content)
+    emotion = "None"
     responses = split_response_chain(content)
 
     return responses, emotion

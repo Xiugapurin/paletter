@@ -1,4 +1,5 @@
 import os
+import logging
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 from flask_restful import Api
@@ -17,18 +18,24 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    app.logger.setLevel(logging.DEBUG)
+
+    gunicorn_error_logger = logging.getLogger("gunicorn.error")
+    app.logger.handlers = gunicorn_error_logger.handlers
+    app.logger.setLevel(gunicorn_error_logger.level)
+
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
     db.init_app(app)
     migrate.init_app(app, db)
 
     scheduler.init_app(app)
-    scheduler.add_job(
-        func=paint_daily_diary, trigger="cron", hour=14, minute=52, id="daily_paint"
-    )
-    scheduler.add_job(
-        func=refresh_daily_diary, trigger="cron", hour=6, minute=0, id="daily_refresh"
-    )
+    # scheduler.add_job(
+    #     func=paint_daily_diary, trigger="cron", hour=14, minute=52, id="daily_paint"
+    # )
+    # scheduler.add_job(
+    #     func=refresh_daily_diary, trigger="cron", hour=6, minute=0, id="daily_refresh"
+    # )
     scheduler.start()
 
     cred = credentials.Certificate(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"))
