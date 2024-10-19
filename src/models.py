@@ -16,7 +16,7 @@ class User(db.Model):
     has_completed_diary = db.Column(db.Boolean, default=False, nullable=False)
     is_trial = db.Column(db.Boolean, default=True, nullable=False)
     created_time = db.Column(db.DateTime, default=datetime.now(), nullable=False)
-    last_login = db.Column(db.DateTime)
+    last_login_time = db.Column(db.DateTime, default=datetime.now(), nullable=False)
 
     def to_dict(self):
         return {
@@ -41,29 +41,52 @@ class Diary(db.Model):
         nullable=False,
     )
     date = db.Column(db.Date, default=date.today, nullable=False)
-    content = db.Column(db.Text, default="", nullable=False)
-    media = db.Column(JSONB)
-    status = db.Column(db.String(15), nullable=False)
-    type = db.Column(db.String(15), default="")
     summary = db.Column(db.String(255), default="")
-    tag = db.Column(db.String(63), default="")
+    reply_paletter_id = db.Column(db.Integer, default=0, nullable=False)
+    reply_content = db.Column(db.Text, default="", nullable=False)
+    reply_picture = db.Column(db.Text, default="", nullable=False)
 
     def to_dict(self):
         return {
             "diary_id": self.diary_id,
             "date": self.date.isoformat(),
-            "content": self.content,
-            "status": self.status,
-            "type": self.type,
             "summary": self.summary,
-            "tag": self.tag,
+            "reply_paletter_id": self.reply_paletter_id,
+            "reply_content": self.reply_content,
+            "reply_picture": self.reply_picture,
         }
 
     def to_limited_dict(self):
         return {
             "diary_id": self.diary_id,
             "date": self.date.isoformat(),
-            "status": self.status,
+            "reply_paletter_id": self.reply_paletter_id,
+        }
+
+
+class DiaryEntry(db.Model):
+    __tablename__ = "diary_entries"
+
+    diary_entry_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    diary_id = db.Column(
+        db.Integer,
+        db.ForeignKey("diaries.diary_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    title = db.Column(db.String(63), default="", nullable=False)
+    content = db.Column(db.Text, default="", nullable=False)
+    emotion = db.Column(db.String(15), default="None", nullable=False)
+    created_time = db.Column(db.DateTime, default=datetime.now(), nullable=False)
+    last_edit_time = db.Column(db.DateTime, default=datetime.now(), nullable=False)
+
+    def to_dict(self):
+        return {
+            "diary_entry_id": self.diary_entry_id,
+            "title": self.title,
+            "content": self.content,
+            "emotion": self.emotion,
+            "created_time": self.created_time.isoformat(),
+            "last_edit_time": self.last_edit_time.isoformat(),
         }
 
 

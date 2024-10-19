@@ -6,7 +6,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 from pydantic import BaseModel, Field
 from .prompts import create_prompt_template
-from .templates import (
+from .templates.paletter import (
     response_clue_template,
     basic_response_template,
     premium_response_template,
@@ -16,6 +16,7 @@ from .templates import (
     diary_to_color_template,
     diary_to_tag_summary_template,
 )
+from .templates.diary import diary_emotion_template
 
 
 class MessageEmotion(BaseModel):
@@ -96,6 +97,20 @@ def get_emotion(content):
 #         current_sentence += text
 
 #     return messages
+
+
+def get_diary_emotion(
+    diary_content,
+):
+    if len(diary_content) <= 10:
+        return "White"
+
+    model = ChatOpenAI(model="gpt-4o-mini")
+    prompt = PromptTemplate(template=diary_emotion_template, input_variables=["query"])
+    runnable = prompt | model | StrOutputParser()
+    emotion = runnable.invoke({"query": diary_content})
+
+    return emotion
 
 
 def split_response_chain(content):
