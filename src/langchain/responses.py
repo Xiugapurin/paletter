@@ -1,9 +1,14 @@
 from typing import List
+from enum import Enum
 
 from datetime import datetime
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
+from langchain_core.output_parsers import (
+    PydanticOutputParser,
+    StrOutputParser,
+    JsonOutputParser,
+)
 from pydantic import BaseModel, Field
 from .prompts import create_prompt_template
 from .templates.paletter import (
@@ -45,6 +50,22 @@ class DiarySummary(BaseModel):
     summary: str = Field(description="Summary of the given diary content")
 
 
+class EmotionEnum(str, Enum):
+    angry_irritable = "Red"
+    happy_joyful = "Yellow"
+    sad_upset = "Blue"
+    fearful_afraid = "Purple"
+    anxious_worried = "Orange"
+    disgusted_annoyed = "Green"
+    calm_peaceful = "Indigo"
+    helpless_wronged = "Gray"
+    unclassified = "White"
+
+
+class DiaryEntryEmotion(BaseModel):
+    emotion: EmotionEnum = Field(description="The emotion of the diary entry")
+
+
 def get_embedding(query):
     embeddings_model = OpenAIEmbeddings(model="text-embedding-3-small")
 
@@ -67,48 +88,24 @@ def get_emotion(content):
     return output["emotion"]
 
 
-# def split_response_chain(content):
-#     messages = []
-#     current_sentence = ""
-#     marks = ["。", "？", "！", ".", "?", "!"]
-
-#     def remove_mark(sentence):
-#         if sentence and sentence[-1] in marks:
-#             return sentence[:-1].strip()
-#         return sentence.strip()
-
-#     for i, text in enumerate(content):
-#         if len(content) - i < 12:
-#             current_sentence += content[i:]
-#             sentence = remove_mark(current_sentence)
-#             messages.append(sentence)
-#             break
-
-#         if text not in marks:
-#             current_sentence += text
-#             continue
-
-#         if len(current_sentence) > 12:
-#             sentence = remove_mark(current_sentence)
-#             messages.append(sentence)
-#             current_sentence = ""
-#             continue
-
-#         current_sentence += text
-
-#     return messages
-
-
 def get_diary_emotion(
     diary_content,
 ):
     if len(diary_content) <= 10:
         return "White"
-
+    parser = PydanticOutputParser(pydantic_object=DiaryEntryEmotion)
     model = ChatOpenAI(model="gpt-4o-mini")
-    prompt = PromptTemplate(template=diary_emotion_template, input_variables=["query"])
-    runnable = prompt | model | StrOutputParser()
-    emotion = runnable.invoke({"query": diary_content})
+
+    prompt = PromptTemplate(
+        template=diary_emotion_template,
+        input_variables=["query"],
+        partial_variables={"format_instructions": parser.get_format_instructions()},
+    )
+    runnable = prompt | model | parser
+
+    output = runnable.invoke({"query": diary_content})
+
+    emotion = output.emotion.value
 
     return emotion
 
@@ -122,6 +119,7 @@ def split_response_chain(content):
     )
     model = ChatOpenAI(model="gpt-4o-mini")
     chain = prompt | model | parser
+
     output = chain.invoke({"query": content})
 
     processed_messages = []
@@ -145,7 +143,7 @@ def get_chat_responses(
     membership_level,
 ):
     today = datetime.now().date().isoformat()
-    date_time = datetime.now().strftime("%m-%d 的 %H:%M")
+    date_time = datetime.now().strftime("%y/%m/%d 的 %H:%M")
     llm_preference = llm_preference if llm_preference else "友善體貼且幽默"
     chat_history_context = (
         chat_history_context

@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import g
 from flask_restful import Resource, reqparse
 from src import db
-from src.models import User, Diary, Message
+from src.models import User, Diary, DiaryEntry, Message
 from src.langchain.responses import (
     get_embedding,
     get_chat_responses,
@@ -98,7 +98,17 @@ class MessageResponseResource(Resource):
         today_diary = Diary.query.filter_by(user_id=user_id, date=today).first()
         today_diary_context = "今天沒有日記"
         if today_diary:
-            today_diary_context = today_diary.content
+            diary_id = today_diary.diary_id
+            diary_entries = DiaryEntry.query.filter_by(diary_id=diary_id).all()
+
+            if diary_entries:
+                combined_content = "\n\n".join(
+                    [
+                        f"{entry.created_time.strftime('%H:%M')} - {entry.content}"
+                        for entry in diary_entries
+                    ]
+                )
+                today_diary_context = combined_content
 
         user_message = Message(
             user_id=user_id,

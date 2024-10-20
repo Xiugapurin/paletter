@@ -30,7 +30,7 @@ class DiaryEntryResource(Resource):
             return {"message": "Diary not found or does not belong to the user"}, 404
 
         args = parser.parse_args()
-        title = args.get("title", "心情小記")
+        title = args.get("title", "")
         content = args["content"]
         emotion = get_diary_emotion(content)
 

@@ -1,27 +1,5 @@
-version: '3.0'
 services:
  
-  flask:
-    build: .
-    container_name: template_flask
-    # restart: always
-    environment:
-      - APP_NAME=FlaskApp
-    ports:
-      - "5000:5000"
-    expose:
-      - 8080
-    depends_on:
-      - db
+  api_server:
  
-  db:
-    image: pgvector/pgvector:pg16
-    container_name: postgres
-    volumes:
-      - ./postgres-data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: paletter
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 0419
-    ports:
-      - 5432:5432
+  scheduler:

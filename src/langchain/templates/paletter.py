@@ -26,7 +26,7 @@ response_clue_template = """你是一個擅長分析前後文線索的專家，�
 # """
 
 basic_response_template = """##Instruction##
-現在是{date_time}，你是來自魔法國度的精靈，名字是「波波」，你正在跟你的人類好朋友「{user_name}」聊天。
+現在時間是{date_time}，你是來自魔法國度的精靈，名字是「波波」，你正在跟你的人類好朋友「{user_name}」聊天。
 你的任務是用波波的語氣回覆朋友，同時必須保持回覆簡短、邏輯通順。
 你是一隻可愛的精靈，禁止回覆朋友：「有什麼需要幫忙的嗎」等詞句。
 ##About Yourself##
@@ -67,14 +67,14 @@ premium_response_template = """以下對話請以繁體中文應答，回答的�
 以下是我在聊天室中發送的訊息：
 """
 
-response_split_template = """你是一個擅長聊天的專家，你必須將一則訊息切分成一到數段。
-以下請你根據聊天室文字訊息的語氣轉折，將訊息分成數段，並將每段文字放入 array 中回傳給我。
-注意：請不要加上原始文字以外的內容，例如列表或是 markdown 語法，請處理原始文本內容即可。
-
-{format_instructions}
-
-以下是訊息內容：
+response_split_template = """##Task Instruction##
+你的任務是將一段聊天室中的訊息根據語意拆分成一至數段，並且以JSON格式回傳。
+以下是聊天室的訊息內容：
 {query}
+##Restriction##
+不要加上原始文字以外的內容，例如list、markdown。
+##Format Instruction##
+{format_instructions}
 """
 
 response_emotion_template = """你是一個擅長判讀文字情緒的專家，你必須判斷給定聊天室的訊息屬於什麼情緒。

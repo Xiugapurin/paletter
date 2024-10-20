@@ -15,8 +15,8 @@ class User(db.Model):
     credit_limit = db.Column(db.Integer, default=0, nullable=False)
     has_completed_diary = db.Column(db.Boolean, default=False, nullable=False)
     is_trial = db.Column(db.Boolean, default=True, nullable=False)
-    created_time = db.Column(db.DateTime, default=datetime.now(), nullable=False)
-    last_login_time = db.Column(db.DateTime, default=datetime.now(), nullable=False)
+    created_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
+    last_login_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
     def to_dict(self):
         return {
@@ -76,8 +76,8 @@ class DiaryEntry(db.Model):
     title = db.Column(db.String(63), default="", nullable=False)
     content = db.Column(db.Text, default="", nullable=False)
     emotion = db.Column(db.String(15), default="None", nullable=False)
-    created_time = db.Column(db.DateTime, default=datetime.now(), nullable=False)
-    last_edit_time = db.Column(db.DateTime, default=datetime.now(), nullable=False)
+    created_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
+    last_edit_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
     def to_dict(self):
         return {
