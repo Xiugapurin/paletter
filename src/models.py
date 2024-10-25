@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import validates
 from pgvector.sqlalchemy import Vector
 from .extensions import db
 
@@ -42,7 +42,7 @@ class Diary(db.Model):
     )
     date = db.Column(db.Date, default=date.today, nullable=False)
     summary = db.Column(db.String(255), default="")
-    reply_paletter_id = db.Column(db.Integer, default=0, nullable=False)
+    reply_paletter_code = db.Column(db.String(7))
     reply_content = db.Column(db.Text, default="", nullable=False)
     reply_picture = db.Column(db.Text, default="", nullable=False)
 
@@ -51,7 +51,7 @@ class Diary(db.Model):
             "diary_id": self.diary_id,
             "date": self.date.isoformat(),
             "summary": self.summary,
-            "reply_paletter_id": self.reply_paletter_id,
+            "reply_paletter_code": self.reply_paletter_code,
             "reply_content": self.reply_content,
             "reply_picture": self.reply_picture,
         }
@@ -60,7 +60,7 @@ class Diary(db.Model):
         return {
             "diary_id": self.diary_id,
             "date": self.date.isoformat(),
-            "reply_paletter_id": self.reply_paletter_id,
+            "reply_paletter_code": self.reply_paletter_code,
         }
 
 
@@ -87,6 +87,40 @@ class DiaryEntry(db.Model):
             "emotion": self.emotion,
             "created_time": self.created_time.isoformat(),
             "last_edit_time": self.last_edit_time.isoformat(),
+        }
+
+
+class Paletter(db.Model):
+    __tablename__ = "paletters"
+
+    paletter_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(
+        db.String(50),
+        db.ForeignKey("users.user_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    paletter_code = db.Column(db.String(7), nullable=False)
+    intimacy_level = db.Column(db.Integer, default=0, nullable=False)
+    vitality_value = db.Column(db.Integer, default=500, nullable=False)
+    created_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
+    last_chat_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
+
+    @validates("intimacy_level", "vitality_value")
+    def validate_range(self, key, value):
+        if key == "intimacy_level" and (value < 0 or value > 100):
+            raise ValueError("intimacy_level must between 0 to 100.")
+        if key == "vitality_value" and (value < 0 or value > 500):
+            raise ValueError("vitality_value must between 0 to 500.")
+        return value
+
+    def to_dict(self):
+        return {
+            "paletter_id": self.paletter_id,
+            "paletter_code": self.paletter_code,
+            "intimacy_level": self.intimacy_level,
+            "vitality_value": self.vitality_value,
+            "created_time": self.created_time.isoformat(),
+            "last_chat_time": self.last_chat_time.isoformat(),
         }
 
 
@@ -121,6 +155,11 @@ class Message(db.Model):
     user_id = db.Column(
         db.String(50),
         db.ForeignKey("users.user_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    paletter_id = db.Column(
+        db.Integer,
+        db.ForeignKey("paletters.paletter_id", ondelete="CASCADE"),
         nullable=False,
     )
     sender = db.Column(db.String(20), nullable=False)

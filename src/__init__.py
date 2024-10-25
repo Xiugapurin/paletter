@@ -7,8 +7,10 @@ import firebase_admin
 from firebase_admin import credentials, auth
 from config import Config
 from .extensions import db, migrate, scheduler
-from .tasks import paint_daily_diary, refresh_daily_diary
+
+# from .tasks import paint_daily_diary, refresh_daily_diary
 from src.resources.user import UserResource, UserListResource
+from src.resources.paletter import PaletterListResource
 from src.resources.diary import DiaryResource, DiaryListResource
 from src.resources.diary_entry import DiaryEntryResource, DiaryEntryListResource
 from src.resources.message import MessageListResource, MessageResponseResource
@@ -46,6 +48,7 @@ def create_app(config_class=Config):
     api = Api(app)
     api.add_resource(UserResource, "/api/user")
     api.add_resource(UserListResource, "/api/users")
+    api.add_resource(PaletterListResource, "/api/paletters")
     api.add_resource(DiaryResource, "/api/diary/<int:diary_id>")
     api.add_resource(DiaryListResource, "/api/diaries/<int:page>")
     api.add_resource(
@@ -54,8 +57,8 @@ def create_app(config_class=Config):
     api.add_resource(DiaryEntryListResource, "/api/diary-entries/<int:diary_id>")
     api.add_resource(ColorResource, "/api/color/<string:color>")
     api.add_resource(ColorListResource, "/api/colors/<int:year>/<int:month>")
-    api.add_resource(MessageListResource, "/api/messages/<int:page>")
-    api.add_resource(MessageResponseResource, "/api/messages")
+    api.add_resource(MessageListResource, "/api/messages/<int:paletter_id>/<int:page>")
+    api.add_resource(MessageResponseResource, "/api/messages/<int:paletter_id>")
 
     @app.before_request
     def authenticate_user():

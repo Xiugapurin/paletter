@@ -42,23 +42,12 @@ class DiaryResource(Resource):
 
     def put(self, diary_id):
         user_id = g.user_id
-        parser.add_argument("content", type=str, required=True, help="Diary content")
-        parser.add_argument("media", type=dict, required=False, help="Diary media")
 
-        if diary_id == 0:
-            today = datetime.now().date()
-            diary = Diary.query.filter_by(user_id=user_id, date=today).first()
-        else:
-            diary = Diary.query.filter_by(
-                user_id=user_id, diary_id=diary_id
-            ).first_or_404()
+        diary = Diary.query.filter_by(user_id=user_id, diary_id=diary_id).first_or_404()
 
-        args = parser.parse_args()
-        diary.content = args.get("content")
-        diary.media = args.get("media", diary.media)
         db.session.commit()
 
-        return diary.to_dict()
+        return diary.to_dict(), 200
 
     def delete(self, diary_id):
         user_id = g.user_id
@@ -106,15 +95,3 @@ class DiaryListResource(Resource):
             "next_page": next_page,
             "total_pages": pagination.pages,
         }, 200
-
-    def post(self):
-        user_id = g.user_id
-
-        new_diary = Diary(
-            user_id=user_id,
-            media={},
-        )
-        db.session.add(new_diary)
-        db.session.commit()
-
-        return new_diary.to_dict(), 200

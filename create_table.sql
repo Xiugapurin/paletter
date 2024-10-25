@@ -16,11 +16,10 @@ CREATE TABLE diaries (
     user_id VARCHAR(50) REFERENCES "users" (user_id) ON DELETE CASCADE,
     date DATE NOT NULL,
     summary VARCHAR(255) DEFAULT '',
-    reply_paletter INTEGER DEFAULT 0 NOT NULL,
+    reply_paletter_code VARCHAR(7),
 	reply_content TEXT DEFAULT '' NOT NULL,
     reply_picture TEXT DEFAULT '' NOT NULL
 );
-
 
 CREATE TABLE diary_entries (
     diary_entry_id SERIAL PRIMARY KEY,
@@ -41,26 +40,20 @@ CREATE TABLE diary_messages (
     send_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
-CREATE TABLE spirits (
-    spirit_id SERIAL PRIMARY KEY,
+CREATE TABLE paletters (
+    paletter_id SERIAL PRIMARY KEY,
     user_id VARCHAR(50) REFERENCES "users" (user_id) ON DELETE CASCADE,
-    spirit_name VARCHAR(50) NOT NULL,
-    
-)
-
-CREATE TABLE colors (
-    color_id SERIAL PRIMARY KEY,
-    diary_id INTEGER REFERENCES "diaries" (diary_id) ON DELETE CASCADE,
-    user_id VARCHAR(50) NOT NULL,
-    color VARCHAR(50) NOT NULL,
-    type VARCHAR(20),
-    content TEXT DEFAULT '' NOT NULL
+    paletter_code VARCHAR(7) NOT NULL,
+    intimacy_level INTEGER CHECK (intimacy_level BETWEEN 0 AND 100) DEFAULT 0 NOT NULL,
+    vitality_value INTEGER CHECK (vitality_value BETWEEN 0 AND 500) DEFAULT 500 NOT NULL,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    last_chat_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE messages (
     message_id SERIAL PRIMARY KEY,
     user_id VARCHAR(50) REFERENCES "users" (user_id) ON DELETE CASCADE,
+    paletter_id INTEGER REFERENCES "paletters" (paletter_id) ON DELETE CASCADE,
     sender VARCHAR(20) NOT NULL,
     content TEXT NOT NULL,
     send_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -75,3 +68,12 @@ CREATE TABLE knowledge (
     is_activate BOOLEAN DEFAULT TRUE NOT NULL,
     embedding vector(1536)
 )
+
+CREATE TABLE colors (
+    color_id SERIAL PRIMARY KEY,
+    diary_id INTEGER REFERENCES "diaries" (diary_id) ON DELETE CASCADE,
+    user_id VARCHAR(50) NOT NULL,
+    color VARCHAR(50) NOT NULL,
+    type VARCHAR(20),
+    content TEXT DEFAULT '' NOT NULL
+);

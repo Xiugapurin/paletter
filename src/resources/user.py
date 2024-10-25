@@ -1,7 +1,7 @@
 from flask import g
 from flask_restful import Resource, reqparse
 from src.extensions import db
-from src.models import User
+from src.models import User, Paletter
 
 parser = reqparse.RequestParser()
 parser.add_argument("name", type=str, help="Name of the user")
@@ -16,7 +16,6 @@ class UserResource(Resource):
 
         user = User.query.filter_by(user_id=user_id).first()
 
-        # TODO: Design credit rule for new users
         if not user:
             user = User(
                 user_id=user_id,
@@ -25,7 +24,15 @@ class UserResource(Resource):
                 profile_picture="",
                 credit_limit=10,
             )
-            db.session.add(user)
+
+            paletter = Paletter(
+                user_id=user_id,
+                paletter_code="A01",
+                intimacy_level=100,
+                vitality_value=500,
+            )
+
+            db.session.add_all([user, paletter])
             db.session.commit()
             print("user created: ", user_id)
 

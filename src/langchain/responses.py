@@ -11,15 +11,13 @@ from langchain_core.output_parsers import (
 )
 from pydantic import BaseModel, Field
 from .prompts import create_prompt_template
-from .templates.paletter import (
+from .templates.paletter import paletter_setting_templates
+from .templates.chat import (
+    basic_chat_template,
     response_clue_template,
     basic_response_template,
     premium_response_template,
     response_split_template,
-    response_emotion_template,
-    diary_html_to_text_template,
-    diary_to_color_template,
-    diary_to_tag_summary_template,
 )
 from .templates.diary import diary_emotion_template
 
@@ -72,22 +70,6 @@ def get_embedding(query):
     return embeddings_model.embed_query(query)
 
 
-def get_emotion(content):
-    model = ChatOpenAI(model="gpt-4o-mini")
-
-    parser = JsonOutputParser(pydantic_object=MessageEmotion)
-    prompt = PromptTemplate(
-        template=response_emotion_template,
-        input_variables=["query"],
-        partial_variables={"format_instructions": parser.get_format_instructions()},
-    )
-
-    chain = prompt | model | parser
-    output = chain.invoke({"query": content})
-
-    return output["emotion"]
-
-
 def get_diary_emotion(
     diary_content,
 ):
@@ -136,31 +118,38 @@ def split_response_chain(content):
 def get_chat_responses(
     user_message,
     user_name,
-    llm_preference,
+    paletter_code,
+    paletter_name,
+    days,
     chat_history_context,
     relevant_diary_context,
     today_diary_context,
     membership_level,
 ):
     today = datetime.now().date().isoformat()
-    date_time = datetime.now().strftime("%y/%m/%d 的 %H:%M")
-    llm_preference = llm_preference if llm_preference else "友善體貼且幽默"
+    date_time = datetime.now().strftime("20%y/%m/%d 的 %H:%M")
     chat_history_context = (
         chat_history_context
         if chat_history_context
         else "沒有任何聊天記錄，請試著向朋友問好哦"
     )
 
+    setting_template = paletter_setting_templates[paletter_code].format(
+        user_name=user_name, days=days
+    )
+
     if membership_level == "Basic":
         model = ChatOpenAI(model="gpt-4o-mini")
-
         # system_template = basic_response_template.format(
-        #     llm_preference=llm_preference,
+        #     date_time=date_time,
+        #     user_name=user_name,
         #     chat_history_context=chat_history_context,
         # )
 
-        system_template = basic_response_template.format(
+        system_template = basic_chat_template.format(
+            settings=setting_template,
             date_time=date_time,
+            paletter_name=paletter_name,
             user_name=user_name,
             chat_history_context=chat_history_context,
         )
@@ -181,7 +170,6 @@ def get_chat_responses(
         clue = runnable.invoke({"query": user_message})
 
         system_template = premium_response_template.format(
-            llm_preference=llm_preference,
             chat_history_context=chat_history_context,
             clue=clue,
             date=today,
@@ -199,54 +187,13 @@ def get_chat_responses(
     return responses, emotion
 
 
-def convert_diary_html_to_text(diary_html):
-    prompt = PromptTemplate(
-        template=diary_html_to_text_template,
-        input_variables=["query"],
-    )
-    model = ChatOpenAI(model="gpt-4o")
-    runnable = prompt | model | StrOutputParser()
-    text = runnable.invoke({"query": diary_html})
+# def get_diary_reply(diary_content):
+#     prompt = PromptTemplate(
+#         template=diary_to_tag_summary_template,
+#         input_variables=["query"],
+#     )
+#     model = ChatOpenAI(model="gpt-4o")
+#     runnable = prompt | model | StrOutputParser()
+#     summary = runnable.invoke({"query": diary_content})
 
-    return text
-
-
-def convert_diary_to_colors(diary_content):
-    parser = JsonOutputParser(pydantic_object=DiaryEmotionList)
-    prompt = PromptTemplate(
-        template=diary_to_color_template,
-        input_variables=["query"],
-        partial_variables={"format_instructions": parser.get_format_instructions()},
-    )
-    model = ChatOpenAI(model="gpt-4o")
-    chain = prompt | model | parser
-    output = chain.invoke({"query": diary_content})
-
-    unique_colors = []
-    seen_colors = set()
-
-    for color_obj in output["colors"]:
-        if color_obj["color"] not in seen_colors:
-            seen_colors.add(color_obj["color"])
-            unique_colors.append(color_obj)
-        if len(unique_colors) >= 2:
-            break
-
-    return unique_colors
-
-
-def convert_diary_to_summary(diary_content):
-    parser = JsonOutputParser(pydantic_object=DiarySummary)
-    prompt = PromptTemplate(
-        template=diary_to_tag_summary_template,
-        input_variables=["query"],
-        partial_variables={"format_instructions": parser.get_format_instructions()},
-    )
-
-    model = ChatOpenAI(model="gpt-4o")
-    runnable = prompt | model | parser
-    summary_item = runnable.invoke({"query": diary_content})
-
-    summary_item["summary_embedding"] = get_embedding(summary_item["summary"])
-
-    return summary_item
+#     return summary
