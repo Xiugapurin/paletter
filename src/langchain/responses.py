@@ -15,11 +15,11 @@ from .templates.paletter import paletter_setting_templates
 from .templates.chat import (
     basic_chat_template,
     response_clue_template,
-    basic_response_template,
     premium_response_template,
     response_split_template,
 )
 from .templates.diary import diary_emotion_template
+from .templates.reply import basic_reply_template
 
 
 class MessageEmotion(BaseModel):
@@ -182,9 +182,36 @@ def get_chat_responses(
 
     # emotion = get_emotion(content)
     emotion = "None"
-    responses = split_response_chain(content)
+    if paletter_code != "Blue-1":
+        responses = split_response_chain(content)
+    else:
+        responses = [content]
 
     return responses, emotion
+
+
+def get_diary_reply(
+    user_name, paletter_code, paletter_name, days, intimacy_level, diary_content
+):
+
+    setting_template = paletter_setting_templates[paletter_code].format(
+        user_name=user_name,
+        days=days,
+    )
+
+    system_template = basic_reply_template.format(
+        settings=setting_template,
+        paletter_name=paletter_name,
+        user_name=user_name,
+        intimacy_level=intimacy_level,
+    )
+
+    model = ChatOpenAI(model="gpt-4o-mini")
+    prompt = create_prompt_template(system_template)
+    runnable = prompt | model | StrOutputParser()
+    reply = runnable.invoke({"input": diary_content})
+
+    return reply
 
 
 # def get_diary_reply(diary_content):

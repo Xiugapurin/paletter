@@ -1,8 +1,11 @@
 from datetime import datetime
+from collections import defaultdict
 from flask import g
 from flask_restful import Resource, reqparse
 from src import db
-from src.models import Diary, DiaryEntry, Color
+from src.models import User, Paletter, Diary, DiaryEntry, Color
+from src.langchain.responses import get_diary_reply
+from src.constants.paletter_table import paletter_code_table
 
 parser = reqparse.RequestParser()
 
@@ -43,8 +46,59 @@ class DiaryResource(Resource):
     def put(self, diary_id):
         user_id = g.user_id
 
+        user = User.query.get_or_404(user_id)
         diary = Diary.query.filter_by(user_id=user_id, diary_id=diary_id).first_or_404()
+        diary_entries = DiaryEntry.query.filter_by(diary_id=diary_id).all()
 
+        if not diary_entries:
+            return {"message": "Diary is empty."}, 404
+
+        # 計算每種emotion的總字數和最新時間
+        emotion_stats = defaultdict(lambda: {"chars": 0, "latest_time": datetime.min})
+
+        for entry in diary_entries:
+            emotion = entry.emotion
+            char_count = len(entry.content)
+
+            emotion_stats[emotion]["chars"] += char_count
+            if entry.created_time > emotion_stats[emotion]["latest_time"]:
+                emotion_stats[emotion]["latest_time"] = entry.created_time
+
+        # 找出主要emotion
+        max_chars = max(stat["chars"] for stat in emotion_stats.values())
+        dominant_emotions = [
+            emotion
+            for emotion, stat in emotion_stats.items()
+            if stat["chars"] == max_chars
+        ]
+
+        # 如果有多個相同字數的emotion，選擇最晚的created_time
+        if len(dominant_emotions) > 1:
+            dominant_emotion = max(
+                dominant_emotions, key=lambda e: emotion_stats[e]["latest_time"]
+            )
+        else:
+            dominant_emotion = dominant_emotions[0]
+
+        user_name = user.name
+        diary_content = "\n\n".join(
+            [
+                f"{entry.created_time.strftime('%H:%M')} - {entry.content}"
+                for entry in diary_entries
+            ]
+        )
+
+        paletter_code = dominant_emotion + "-1"
+        paletter_name = paletter_code_table[paletter_code]
+
+        reply_content = get_diary_reply(
+            user_name, paletter_code, paletter_name, "30", "5", diary_content
+        )
+
+        diary.reply_paletter_code = paletter_code
+        diary.reply_content = reply_content
+
+        db.session.add(diary)
         db.session.commit()
 
         return diary.to_dict(), 200

@@ -7,7 +7,7 @@ from src.langchain.responses import (
     get_embedding,
     get_chat_responses,
 )
-from src.constant.paletter_table import paletter_code_table
+from src.constants.paletter_table import paletter_code_table
 
 parser = reqparse.RequestParser()
 parser.add_argument("content", type=str)

@@ -2,6 +2,7 @@ from datetime import datetime, date
 from sqlalchemy.orm import validates
 from pgvector.sqlalchemy import Vector
 from .extensions import db
+from src.constants.paletter_table import paletter_code_table
 
 
 class User(db.Model):
@@ -42,7 +43,7 @@ class Diary(db.Model):
     )
     date = db.Column(db.Date, default=date.today, nullable=False)
     summary = db.Column(db.String(255), default="")
-    reply_paletter_code = db.Column(db.String(7))
+    reply_paletter_code = db.Column(db.String(31))
     reply_content = db.Column(db.Text, default="", nullable=False)
     reply_picture = db.Column(db.Text, default="", nullable=False)
 
@@ -99,7 +100,7 @@ class Paletter(db.Model):
         db.ForeignKey("users.user_id", ondelete="CASCADE"),
         nullable=False,
     )
-    paletter_code = db.Column(db.String(7), nullable=False)
+    paletter_code = db.Column(db.String(31), nullable=False)
     intimacy_level = db.Column(db.Integer, default=0, nullable=False)
     vitality_value = db.Column(db.Integer, default=500, nullable=False)
     created_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
@@ -117,6 +118,7 @@ class Paletter(db.Model):
         return {
             "paletter_id": self.paletter_id,
             "paletter_code": self.paletter_code,
+            "paletter_name": paletter_code_table[self.paletter_code],
             "intimacy_level": self.intimacy_level,
             "vitality_value": self.vitality_value,
             "created_time": self.created_time.isoformat(),
