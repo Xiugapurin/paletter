@@ -43,7 +43,7 @@ class Diary(db.Model):
     )
     date = db.Column(db.Date, default=date.today, nullable=False)
     summary = db.Column(db.String(255), default="")
-    reply_paletter_code = db.Column(db.String(31))
+    reply_paletter_code = db.Column(db.String(31), default="None", nullable=False)
     reply_content = db.Column(db.Text, default="", nullable=False)
     reply_picture = db.Column(db.Text, default="", nullable=False)
 
@@ -61,6 +61,11 @@ class Diary(db.Model):
         return {
             "diary_id": self.diary_id,
             "date": self.date.isoformat(),
+            "emotion": (
+                self.reply_paletter_code.split("-")[0]
+                if self.reply_paletter_code != "None"
+                else "None"
+            ),
             "reply_paletter_code": self.reply_paletter_code,
         }
 

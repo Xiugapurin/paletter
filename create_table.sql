@@ -16,7 +16,7 @@ CREATE TABLE diaries (
     user_id VARCHAR(50) REFERENCES "users" (user_id) ON DELETE CASCADE,
     date DATE NOT NULL,
     summary VARCHAR(255) DEFAULT '',
-    reply_paletter_code VARCHAR(31),
+    reply_paletter_code VARCHAR(31) DEFAULT 'None' NOT NULL,
 	reply_content TEXT DEFAULT '' NOT NULL,
     reply_picture TEXT DEFAULT '' NOT NULL
 );
