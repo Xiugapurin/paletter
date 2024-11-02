@@ -5,7 +5,7 @@ from flask import g
 from flask_restful import Resource
 from sqlalchemy import extract
 from src.models import Diary, Color
-from src.constants.paletter_table import paletter_code_table
+from src.constants.paletter_table import paletter_name_table
 
 
 class EmotionResource(Resource):
@@ -78,7 +78,7 @@ class EmotionListResource(Resource):
                 "diary_id": -1,
                 "date": f"{year}-{month:02d}-{str(day).zfill(2)}",
                 "emotion": "None",
-                "paletter_code": "None",
+                "paletter_code": "",
             }
             for day in range(1, days_in_month + 1)
         ]
@@ -130,10 +130,10 @@ class EmotionListResource(Resource):
         paletter_ranks = [
             {
                 "paletter_code": code,
-                "paletter_name": paletter_code_table[code],
+                "paletter_name": paletter_name_table[code],
                 "count": emotion_counts[emotion],
             }
-            for code, emotion in zip(paletter_code_table.keys(), emotion_counts.keys())
+            for code, emotion in zip(paletter_name_table.keys(), emotion_counts.keys())
             if emotion_counts[emotion] > 0
         ]
 

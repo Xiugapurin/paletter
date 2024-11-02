@@ -2,7 +2,7 @@ from typing import List
 from enum import Enum
 
 from datetime import datetime
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import (
     PydanticOutputParser,
@@ -10,7 +10,7 @@ from langchain_core.output_parsers import (
     JsonOutputParser,
 )
 from pydantic import BaseModel, Field
-from .prompts import create_prompt_template
+from .utils import create_prompt_template
 from .templates.paletter import paletter_setting_templates
 from .templates.chat import (
     basic_chat_template,
@@ -50,24 +50,18 @@ class DiarySummary(BaseModel):
 
 class EmotionEnum(str, Enum):
     angry_irritable = "Red"
-    happy_joyful = "Yellow"
-    sad_upset = "Blue"
-    fearful_afraid = "Purple"
     anxious_worried = "Orange"
+    happy_joyful = "Yellow"
     disgusted_annoyed = "Green"
+    sad_upset = "Blue"
     calm_peaceful = "Indigo"
+    fearful_afraid = "Purple"
     helpless_wronged = "Gray"
     unclassified = "White"
 
 
 class DiaryEntryEmotion(BaseModel):
     emotion: EmotionEnum = Field(description="The emotion of the diary entry")
-
-
-def get_embedding(query):
-    embeddings_model = OpenAIEmbeddings(model="text-embedding-3-small")
-
-    return embeddings_model.embed_query(query)
 
 
 def get_diary_emotion(
@@ -212,15 +206,3 @@ def get_diary_reply(
     reply = runnable.invoke({"input": diary_content})
 
     return reply
-
-
-# def get_diary_reply(diary_content):
-#     prompt = PromptTemplate(
-#         template=diary_to_tag_summary_template,
-#         input_variables=["query"],
-#     )
-#     model = ChatOpenAI(model="gpt-4o")
-#     runnable = prompt | model | StrOutputParser()
-#     summary = runnable.invoke({"query": diary_content})
-
-#     return summary

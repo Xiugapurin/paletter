@@ -16,7 +16,7 @@ CREATE TABLE diaries (
     user_id VARCHAR(50) REFERENCES "users" (user_id) ON DELETE CASCADE,
     date DATE NOT NULL,
     summary VARCHAR(255) DEFAULT '',
-    reply_paletter_code VARCHAR(31) DEFAULT 'None' NOT NULL,
+    reply_paletter_code VARCHAR(31) DEFAULT '' NOT NULL,
 	reply_content TEXT DEFAULT '' NOT NULL,
     reply_picture TEXT DEFAULT '' NOT NULL
 );
@@ -53,27 +53,10 @@ CREATE TABLE messages (
 CREATE TABLE knowledge (
     knowledge_id SERIAL PRIMARY KEY,
     user_id VARCHAR(50) REFERENCES "users" (user_id) ON DELETE CASCADE,
+    paletter_id INTEGER REFERENCES "paletters" (paletter_id) ON DELETE CASCADE,
     date DATE NOT NULL,
-    owner VARCHAR(15) NOT NULL,
     content TEXT NOT NULL,
-    is_activate BOOLEAN DEFAULT TRUE NOT NULL,
-    embedding vector(1536)
-)
-
-CREATE TABLE colors (
-    color_id SERIAL PRIMARY KEY,
-    diary_id INTEGER REFERENCES "diaries" (diary_id) ON DELETE CASCADE,
-    user_id VARCHAR(50) NOT NULL,
-    color VARCHAR(50) NOT NULL,
-    type VARCHAR(20),
-    content TEXT DEFAULT '' NOT NULL
-);
-
-CREATE TABLE diary_messages (
-    diary_message_id SERIAL PRIMARY KEY,
-    diary_id INTEGER REFERENCES "diaries" (diary_id) ON DELETE CASCADE,
-    user_id VARCHAR(50) NOT NULL,
-    sender VARCHAR(20) NOT NULL,
-    content TEXT NOT NULL,
-    send_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    embedding vector(1536),
+    activate_count INTEGER DEFAULT 0 NOT NULL,
+    is_activate BOOLEAN DEFAULT TRUE NOT NULL
 );

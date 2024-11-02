@@ -2,7 +2,7 @@ from datetime import datetime, date
 from sqlalchemy.orm import validates
 from pgvector.sqlalchemy import Vector
 from .extensions import db
-from src.constants.paletter_table import paletter_code_table
+from src.constants.paletter_table import paletter_name_table
 
 
 class User(db.Model):
@@ -43,7 +43,7 @@ class Diary(db.Model):
     )
     date = db.Column(db.Date, default=date.today, nullable=False)
     summary = db.Column(db.String(255), default="")
-    reply_paletter_code = db.Column(db.String(31), default="None", nullable=False)
+    reply_paletter_code = db.Column(db.String(31), default="", nullable=False)
     reply_content = db.Column(db.Text, default="", nullable=False)
     reply_picture = db.Column(db.Text, default="", nullable=False)
 
@@ -63,7 +63,7 @@ class Diary(db.Model):
             "date": self.date.isoformat(),
             "emotion": (
                 self.reply_paletter_code.split("-")[0]
-                if self.reply_paletter_code != "None"
+                if self.reply_paletter_code != ""
                 else "None"
             ),
             "reply_paletter_code": self.reply_paletter_code,
@@ -123,7 +123,7 @@ class Paletter(db.Model):
         return {
             "paletter_id": self.paletter_id,
             "paletter_code": self.paletter_code,
-            "paletter_name": paletter_code_table[self.paletter_code],
+            "paletter_name": paletter_name_table[self.paletter_code],
             "intimacy_level": self.intimacy_level,
             "vitality_value": self.vitality_value,
             "created_time": self.created_time.isoformat(),
@@ -191,15 +191,25 @@ class Knowledge(db.Model):
         db.ForeignKey("users.user_id", ondelete="CASCADE"),
         nullable=False,
     )
+    paletter_id = db.Column(
+        db.Integer,
+        db.ForeignKey("paletters.paletter_id", ondelete="CASCADE"),
+        nullable=False,
+    )
     date = db.Column(db.Date, default=date.today, nullable=False)
-    owner = db.Column(db.String(15), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    is_activate = db.Column(db.Boolean, default=True, nullable=False)
     embedding = db.Column(Vector(1536))
+    activate_count = db.Column(db.Integer, default=0, nullable=False)
+    is_activate = db.Column(db.Boolean, default=True, nullable=False)
 
     def to_dict(self):
         return {
-            "chunk_id": self.chunk_id,
-            "diary_id": self.diary_id,
-            "chunk_content": self.chunk_content,
+            "knowledge_id": self.knowledge_id,
+            "user_id": self.user_id,
+            "paletter_id": self.paletter_id,
+            "date": self.date.isoformat(),
+            "content": self.content,
+            "embedding": self.embedding,
+            "activate_count": self.activate_count,
+            "is_activate": self.is_activate,
         }

@@ -3,11 +3,9 @@ from flask import g
 from flask_restful import Resource, reqparse
 from src import db
 from src.models import User, Paletter, Diary, DiaryEntry, Message
-from src.langchain.responses import (
-    get_embedding,
-    get_chat_responses,
-)
-from src.constants.paletter_table import paletter_code_table
+from src.langchain.responses import get_chat_responses
+from src.langchain.utils import get_embedding
+from src.constants.paletter_table import paletter_name_table
 
 parser = reqparse.RequestParser()
 parser.add_argument("content", type=str)
@@ -27,7 +25,7 @@ class MessageListResource(Resource):
         user_id = g.user_id
 
         paletter = Paletter.query.get_or_404(paletter_id)
-        paletter_name = paletter_code_table.get(paletter.paletter_code, "Unknown")
+        paletter_name = paletter_name_table.get(paletter.paletter_code, "Unknown")
 
         try:
             page = int(page)
@@ -84,7 +82,7 @@ class MessageResponseResource(Resource):
         membership_level = user.membership_level
 
         paletter_code = paletter.paletter_code
-        paletter_name = paletter_code_table[paletter_code]
+        paletter_name = paletter_name_table[paletter_code]
         days = str((datetime.now() - paletter.created_time).days + 1)
 
         relevant_diary_context = ""
