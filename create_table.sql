@@ -1,11 +1,9 @@
 CREATE TABLE users (
     user_id VARCHAR(50) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    llm_preference VARCHAR(255),
     profile_picture TEXT,
     membership_level VARCHAR(15) DEFAULT "Basic" NOT NULL,
     credit_limit INTEGER DEFAULT 0 NOT NULL,
-    has_completed_diary BOOLEAN DEFAULT FALSE NOT NULL,
     is_trial BOOLEAN DEFAULT TRUE NOT NULL,
     created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     last_login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
@@ -54,6 +52,8 @@ CREATE TABLE knowledge (
     knowledge_id SERIAL PRIMARY KEY,
     user_id VARCHAR(50) REFERENCES "users" (user_id) ON DELETE CASCADE,
     paletter_id INTEGER REFERENCES "paletters" (paletter_id) ON DELETE CASCADE,
+    source VARCHAR(15) NOT NULL,
+    source_id INTEGER DEFAULT -1 NOT NULL,
     date DATE NOT NULL,
     content TEXT NOT NULL,
     embedding vector(1536),

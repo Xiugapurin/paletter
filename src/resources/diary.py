@@ -130,14 +130,36 @@ class DiaryResource(Resource):
         paletter_code = f"{dominant_emotion}-{selected_paletter['number']}"
         paletter_name = selected_paletter["name"]
 
-        # TODO: Add paletter when paletter not exist
+        # Check if paletter existed
         paletter = Paletter.query.filter_by(
             user_id=user_id, paletter_code=paletter_code
+        ).first()
+        intimacy_level = 0
+
+        if not paletter:
+            new_paletter = Paletter(
+                user_id=user_id,
+                paletter_code=paletter_code,
+                intimacy_level=0,
+                vitality_value=500,
+            )
+
+            db.session.add(new_paletter)
+            db.session.flush()
+            paletter = new_paletter
+        else:
+            intimacy_level = paletter.intimacy_level + 5
+            paletter.intimacy_level = intimacy_level
+
+            db.session.add(paletter)
+
+        basic_paletter = Paletter.query.filter_by(
+            user_id=user_id, paletter_code="Pal-1"
         ).first_or_404()
 
         today = date.today()
         days_diff = str((today - paletter.created_time.date()).days + 1)
-        intimacy_level = str(math.floor(paletter.intimacy_level / 20))
+        intimacy_level = str(math.floor(intimacy_level / 20))
 
         diary_content = "\n\n".join(
             [
@@ -146,6 +168,7 @@ class DiaryResource(Resource):
             ]
         )
 
+        print("intimacy_level: ", intimacy_level)
         reply_content = get_diary_reply(
             user.name,
             paletter_code,
@@ -163,9 +186,11 @@ class DiaryResource(Resource):
         for chunk_content in diary_chunks:
             embedding = get_embedding(chunk_content)
 
-            knowledge = Knowledge(
+            basic_knowledge = Knowledge(
                 user_id=user_id,
-                paletter_id=paletter.paletter_id,
+                paletter_id=basic_paletter.paletter_id,
+                source="Diary",
+                source_id=diary_id,
                 date=today,
                 content=chunk_content,
                 embedding=embedding,
@@ -173,6 +198,19 @@ class DiaryResource(Resource):
                 is_activate=True,
             )
 
+            knowledge = Knowledge(
+                user_id=user_id,
+                paletter_id=paletter.paletter_id,
+                source="Diary",
+                source_id=diary_id,
+                date=today,
+                content=chunk_content,
+                embedding=embedding,
+                activate_count=0,
+                is_activate=True,
+            )
+
+            db.session.add(basic_knowledge)
             db.session.add(knowledge)
 
         db.session.add(diary)

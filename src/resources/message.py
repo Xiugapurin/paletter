@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import g
 from flask_restful import Resource, reqparse
 from src import db
-from src.models import User, Paletter, Diary, DiaryEntry, Message
+from src.models import User, Paletter, Diary, DiaryEntry, Message, Knowledge
 from src.langchain.responses import get_chat_responses
 from src.langchain.utils import get_embedding
 from src.constants.paletter_table import paletter_name_table
@@ -85,18 +85,21 @@ class MessageResponseResource(Resource):
         paletter_name = paletter_name_table[paletter_code]
         days = str((datetime.now() - paletter.created_time).days + 1)
 
-        relevant_diary_context = ""
+        relevant_context = ""
         if membership_level == "Premium" or membership_level == "VIP":
             content_embedding = get_embedding(content)
-            relevant_diaries = (
-                Diary.query.filter_by(user_id=user_id)
-                .order_by(Diary.summary_embedding.cosine_distance(content_embedding))
+            relevant_knowledge = (
+                Knowledge.query.filter_by(user_id=user_id, paletter_id=paletter_id)
+                .order_by(Knowledge.embedding.cosine_distance(content_embedding))
                 .limit(5)
                 .all()
             )
 
-            for i, diary in enumerate(relevant_diaries):
-                relevant_diary_context += f"線索{str(i+1)} - {diary.date.isoformat()} 的日記內容: {diary.summary}\n"
+            for i, knowledge in enumerate(relevant_knowledge):
+                context_source = "日記" if knowledge.source == "Diary" else "訊息"
+                relevant_context += (
+                    f"線索{str(i+1)} - {context_source}內容: {knowledge.content}\n"
+                )
 
         chat_history = (
             Message.query.filter_by(user_id=user_id, paletter_id=paletter_id)
@@ -144,7 +147,7 @@ class MessageResponseResource(Resource):
             paletter_name,
             days,
             chat_history_context,
-            relevant_diary_context,
+            relevant_context,
             today_diary_context,
             membership_level,
         )

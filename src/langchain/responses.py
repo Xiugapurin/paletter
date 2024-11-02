@@ -15,11 +15,11 @@ from .templates.paletter import paletter_setting_templates
 from .templates.chat import (
     basic_chat_template,
     response_clue_template,
-    premium_response_template,
+    premium_chat_template,
     response_split_template,
 )
 from .templates.diary import diary_emotion_template
-from .templates.reply import basic_reply_template
+from .templates.reply import basic_reply_template, stranger_reply_template
 
 
 class MessageEmotion(BaseModel):
@@ -49,14 +49,14 @@ class DiarySummary(BaseModel):
 
 
 class EmotionEnum(str, Enum):
-    angry_irritable = "Red"
-    anxious_worried = "Orange"
-    happy_joyful = "Yellow"
-    disgusted_annoyed = "Green"
-    sad_upset = "Blue"
-    calm_peaceful = "Indigo"
-    fearful_afraid = "Purple"
-    helpless_wronged = "Gray"
+    angry_agitated_irritable = "Red"
+    excited_surprised_joyous = "Orange"
+    happy_content_joyful = "Yellow"
+    calm_relaxed_easygoing = "Green"
+    tired_weary_sleepy = "Blue"
+    sad_depressed_dismal = "Indigo"
+    frustrated_annoyed_distressed = "Purple"
+    tense_scared_terrified = "Pink"
     unclassified = "White"
 
 
@@ -116,11 +116,10 @@ def get_chat_responses(
     paletter_name,
     days,
     chat_history_context,
-    relevant_diary_context,
+    relevant_context,
     today_diary_context,
     membership_level,
 ):
-    today = datetime.now().date().isoformat()
     date_time = datetime.now().strftime("20%y/%m/%d 的 %H:%M")
     chat_history_context = (
         chat_history_context
@@ -134,11 +133,6 @@ def get_chat_responses(
 
     if membership_level == "Basic":
         model = ChatOpenAI(model="gpt-4o-mini")
-        # system_template = basic_response_template.format(
-        #     date_time=date_time,
-        #     user_name=user_name,
-        #     chat_history_context=chat_history_context,
-        # )
 
         system_template = basic_chat_template.format(
             settings=setting_template,
@@ -149,24 +143,16 @@ def get_chat_responses(
         )
 
     if membership_level == "Premium":
-        model = ChatOpenAI(model="gpt-4o")
+        model = ChatOpenAI(model="gpt-4o-mini")
 
-        clue_prompt = PromptTemplate(
-            template=response_clue_template,
-            input_variables=["query"],
-            partial_variables={
-                "relevant_diary_context": relevant_diary_context,
-                "today_diary_context": today_diary_context,
-                "date": today,
-            },
-        )
-        runnable = clue_prompt | model | StrOutputParser()
-        clue = runnable.invoke({"query": user_message})
-
-        system_template = premium_response_template.format(
+        system_template = premium_chat_template.format(
+            settings=setting_template,
+            date_time=date_time,
+            paletter_name=paletter_name,
+            user_name=user_name,
             chat_history_context=chat_history_context,
-            clue=clue,
-            date=today,
+            today_diary_context=today_diary_context,
+            relevant_context=relevant_context,
         )
 
     print(system_template)
@@ -176,7 +162,7 @@ def get_chat_responses(
 
     # emotion = get_emotion(content)
     emotion = "None"
-    if paletter_code != "Blue-1":
+    if paletter_code != "Indigo-1":
         responses = split_response_chain(content)
     else:
         responses = [content]
@@ -193,12 +179,17 @@ def get_diary_reply(
         days=days,
     )
 
-    system_template = basic_reply_template.format(
-        settings=setting_template,
-        paletter_name=paletter_name,
-        user_name=user_name,
-        intimacy_level=intimacy_level,
-    )
+    if intimacy_level == "0":
+        system_template = stranger_reply_template.format(
+            settings=setting_template, paletter_name=paletter_name
+        )
+    else:
+        system_template = basic_reply_template.format(
+            settings=setting_template,
+            paletter_name=paletter_name,
+            user_name=user_name,
+            intimacy_level=intimacy_level,
+        )
 
     model = ChatOpenAI(model="gpt-4o-mini")
     prompt = create_prompt_template(system_template)

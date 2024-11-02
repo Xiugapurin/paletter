@@ -10,11 +10,9 @@ class User(db.Model):
 
     user_id = db.Column(db.String(50), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    llm_preference = db.Column(db.String(255))
     profile_picture = db.Column(db.Text)
     membership_level = db.Column(db.String(15), default="Basic", nullable=False)
     credit_limit = db.Column(db.Integer, default=0, nullable=False)
-    has_completed_diary = db.Column(db.Boolean, default=False, nullable=False)
     is_trial = db.Column(db.Boolean, default=True, nullable=False)
     created_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
     last_login_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
@@ -23,11 +21,9 @@ class User(db.Model):
         return {
             "user_id": self.user_id,
             "name": self.name,
-            "llm_preference": self.llm_preference,
             "profile_picture": self.profile_picture,
             "membership_level": self.membership_level,
             "credit_limit": self.credit_limit,
-            "has_completed_diary": self.has_completed_diary,
             "is_trial": self.is_trial,
         }
 
@@ -196,6 +192,8 @@ class Knowledge(db.Model):
         db.ForeignKey("paletters.paletter_id", ondelete="CASCADE"),
         nullable=False,
     )
+    source = db.Column(db.String(15), nullable=False)
+    source_id = db.Column(db.Integer, default=-1, nullable=False)
     date = db.Column(db.Date, default=date.today, nullable=False)
     content = db.Column(db.Text, nullable=False)
     embedding = db.Column(Vector(1536))
@@ -207,6 +205,8 @@ class Knowledge(db.Model):
             "knowledge_id": self.knowledge_id,
             "user_id": self.user_id,
             "paletter_id": self.paletter_id,
+            "diary_id": self.diary_id,
+            "type": self.type,
             "date": self.date.isoformat(),
             "content": self.content,
             "embedding": self.embedding,

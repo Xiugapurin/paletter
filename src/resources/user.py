@@ -27,7 +27,7 @@ class UserResource(Resource):
 
             paletter = Paletter(
                 user_id=user_id,
-                paletter_code="A01",
+                paletter_code="Pal-1",
                 intimacy_level=100,
                 vitality_value=500,
             )
