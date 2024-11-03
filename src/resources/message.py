@@ -37,7 +37,7 @@ class MessageListResource(Resource):
 
         pagination = (
             Message.query.filter_by(user_id=user_id, paletter_id=paletter_id)
-            .order_by(Message.message_id)
+            .order_by(Message.message_id.desc())
             .paginate(page=page, per_page=50, error_out=False)
         )
 
@@ -58,7 +58,7 @@ class MessageListResource(Resource):
                 "total_pages": 1,
             }, 200
 
-        messages = [message.to_dict() for message in pagination.items]
+        messages = [message.to_dict() for message in pagination.items][::-1]
         next_page = pagination.page + 1 if pagination.has_next else -1
 
         return {
@@ -169,5 +169,4 @@ class MessageResponseResource(Resource):
         # TODO: add emotion
         return {
             "ai_messages": [msg.to_dict() for msg in ai_messages],
-            "emotion": emotion,
         }, 200

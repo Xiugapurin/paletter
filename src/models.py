@@ -17,15 +17,17 @@ class User(db.Model):
     created_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
     last_login_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
+    # def to_dict(self):
+    #     return {
+    #         "name": self.name,
+    #         "profile_picture": self.profile_picture,
+    #         "membership_level": self.membership_level,
+    #         "credit_limit": self.credit_limit,
+    #         "is_trial": self.is_trial,
+    #     }
+
     def to_dict(self):
-        return {
-            "user_id": self.user_id,
-            "name": self.name,
-            "profile_picture": self.profile_picture,
-            "membership_level": self.membership_level,
-            "credit_limit": self.credit_limit,
-            "is_trial": self.is_trial,
-        }
+        return {"name": self.name, "profile_picture": self.profile_picture}
 
 
 class Diary(db.Model):
@@ -38,7 +40,6 @@ class Diary(db.Model):
         nullable=False,
     )
     date = db.Column(db.Date, default=date.today, nullable=False)
-    summary = db.Column(db.String(255), default="")
     reply_paletter_code = db.Column(db.String(31), default="", nullable=False)
     reply_content = db.Column(db.Text, default="", nullable=False)
     reply_picture = db.Column(db.Text, default="", nullable=False)
@@ -47,21 +48,15 @@ class Diary(db.Model):
         return {
             "diary_id": self.diary_id,
             "date": self.date.isoformat(),
-            "summary": self.summary,
             "reply_paletter_code": self.reply_paletter_code,
             "reply_content": self.reply_content,
-            "reply_picture": self.reply_picture,
         }
 
     def to_limited_dict(self):
         return {
             "diary_id": self.diary_id,
             "date": self.date.isoformat(),
-            "emotion": (
-                self.reply_paletter_code.split("-")[0]
-                if self.reply_paletter_code != ""
-                else "None"
-            ),
+            "emotion": self.reply_paletter_code.split("-")[0],
             "reply_paletter_code": self.reply_paletter_code,
         }
 
@@ -124,30 +119,6 @@ class Paletter(db.Model):
             "vitality_value": self.vitality_value,
             "created_time": self.created_time.isoformat(),
             "last_chat_time": self.last_chat_time.isoformat(),
-        }
-
-
-class Color(db.Model):
-    __tablename__ = "colors"
-
-    color_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(50), nullable=False)
-    diary_id = db.Column(
-        db.Integer,
-        db.ForeignKey("diaries.diary_id", ondelete="CASCADE"),
-        nullable=False,
-    )
-    color = db.Column(db.String(50), nullable=False)
-    type = db.Column(db.String(20))
-    content = db.Column(db.Text, default="", nullable=False)
-
-    def to_dict(self):
-        return {
-            "color_id": self.color_id,
-            "diary_id": self.diary_id,
-            "color": self.color,
-            "type": self.type,
-            "content": self.content,
         }
 
 

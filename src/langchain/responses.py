@@ -4,6 +4,7 @@ from enum import Enum
 from datetime import datetime
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
+from langchain.schema.runnable import RunnableParallel
 from langchain_core.output_parsers import (
     PydanticOutputParser,
     StrOutputParser,
@@ -18,12 +19,8 @@ from .templates.chat import (
     premium_chat_template,
     response_split_template,
 )
-from .templates.diary import diary_emotion_template
+from .templates.diary import diary_emotion_template, diary_title_template
 from .templates.reply import basic_reply_template, stranger_reply_template
-
-
-class MessageEmotion(BaseModel):
-    emotion: str = Field(description="The emotion of the message")
 
 
 class MessageContent(BaseModel):
@@ -32,20 +29,6 @@ class MessageContent(BaseModel):
 
 class MessageList(BaseModel):
     messages: List[MessageContent]
-
-
-class DiaryEmotion(BaseModel):
-    color: str = Field(description="Emotion color based on the diary content")
-    content: str = Field(description="Content of the diary representing the emotion")
-
-
-class DiaryEmotionList(BaseModel):
-    colors: List[DiaryEmotion]
-
-
-class DiarySummary(BaseModel):
-    tag: str = Field(description="The tag for the diary")
-    summary: str = Field(description="Summary of the given diary content")
 
 
 class EmotionEnum(str, Enum):
@@ -69,21 +52,47 @@ def get_diary_emotion(
 ):
     if len(diary_content) <= 10:
         return "White"
+
     parser = PydanticOutputParser(pydantic_object=DiaryEntryEmotion)
     model = ChatOpenAI(model="gpt-4o-mini")
 
-    prompt = PromptTemplate(
+    diary_emotion_prompt = PromptTemplate(
         template=diary_emotion_template,
         input_variables=["query"],
         partial_variables={"format_instructions": parser.get_format_instructions()},
     )
-    runnable = prompt | model | parser
-
+    runnable = diary_emotion_prompt | model | parser
     output = runnable.invoke({"query": diary_content})
-
     emotion = output.emotion.value
 
     return emotion
+
+
+def get_diary_title_and_emotion(
+    diary_content,
+):
+    timestamp = datetime.now().strftime("%H:%M")
+    if len(diary_content) <= 10:
+        return "心情小記", "White"
+
+    parser = PydanticOutputParser(pydantic_object=DiaryEntryEmotion)
+    model = ChatOpenAI(model="gpt-4o-mini")
+
+    emotion_prompt = PromptTemplate(
+        template=diary_emotion_template,
+        input_variables=["query"],
+        partial_variables={"format_instructions": parser.get_format_instructions()},
+    )
+    emotion_chain = emotion_prompt | model | parser
+
+    system_template = diary_title_template.format(timestamp=timestamp)
+    title_prompt = create_prompt_template(system_template)
+    title_chain = title_prompt | model | StrOutputParser()
+
+    parallel_chain = RunnableParallel(emotion=emotion_chain, title=title_chain)
+    output = parallel_chain.invoke({"query": diary_content, "input": diary_content})
+
+    return output["title"], output["emotion"].emotion.value
 
 
 def split_response_chain(content):

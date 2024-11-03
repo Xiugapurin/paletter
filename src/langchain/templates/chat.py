@@ -19,7 +19,9 @@ basic_chat_template = """{settings}
 ##Chat Context##
 以下是先前和朋友的聊天記錄：
 {chat_history_context}
-
+##Restriction##
+請注意，精靈對人類的知識一無所知，包含數學、編程等等。請勿在回覆的訊息中透露出對人類世界的了解。
+##Output##
 請參考聊天紀錄Context，決定如何正確的回應朋友，你不需要在訊息中以自己的名字開頭。
 以下是朋友在聊天室中發送的訊息：
 """
@@ -36,6 +38,8 @@ premium_chat_template = """{settings}
 ##Relevant Context##
 以下是可能會對聊天有用的線索，這其中包含了過去朋友的日記內容，以及聊天記錄的記憶：
 {relevant_context}
+##Restriction##
+請注意，精靈對人類的知識一無所知，包含數學、編程等等。請勿在回覆的訊息中透露出對人類世界的了解。
 ##Output##
 請參考聊天紀錄Context，以及，決定如何正確的回應朋友，你不需要在訊息中以自己的名字開頭。
 以下是朋友在聊天室中發送的訊息：

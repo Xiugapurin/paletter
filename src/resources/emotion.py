@@ -4,52 +4,8 @@ from calendar import monthrange
 from flask import g
 from flask_restful import Resource
 from sqlalchemy import extract
-from src.models import Diary, Color
+from src.models import Diary
 from src.constants.paletter_table import paletter_name_table
-
-
-class EmotionResource(Resource):
-    def get(self, color):
-        user_id = g.user_id
-
-        if color not in [
-            "Red",
-            "Orange",
-            "Yellow",
-            "Green",
-            "Blue",
-            "Indigo",
-            "Purple",
-            "Gray",
-            "White",
-        ]:
-            return {"error": "Invalid color."}, 400
-
-        colors = Color.query.filter_by(user_id=user_id, color=color).all()
-        diary_ids = [color_entry.diary_id for color_entry in colors]
-
-        diaries = (
-            Diary.query.filter(Diary.diary_id.in_(diary_ids))
-            .order_by(Diary.date.desc())
-            .all()
-        )
-
-        result = []
-        for diary in diaries:
-            color_entry = next(
-                (ce for ce in colors if ce.diary_id == diary.diary_id), None
-            )
-            if color_entry:
-                result.append(
-                    {
-                        "diary_id": diary.diary_id,
-                        "date": diary.date.isoformat().replace("-", " / "),
-                        "tag": diary.tag,
-                        "content": color_entry.content,
-                    }
-                )
-
-        return {"diaries": result}, 200
 
 
 class EmotionListResource(Resource):
@@ -70,14 +26,12 @@ class EmotionListResource(Resource):
 
         days_in_month = monthrange(year, month)[1]
         current_date = datetime.now().date()
-        if year == current_date.year and month == current_date.month:
-            days_in_month = current_date.day
 
         diary_list = [
             {
                 "diary_id": -1,
                 "date": f"{year}-{month:02d}-{str(day).zfill(2)}",
-                "emotion": "None",
+                "emotion": "",
                 "paletter_code": "",
             }
             for day in range(1, days_in_month + 1)
@@ -115,7 +69,7 @@ class EmotionListResource(Resource):
                     emotion_counts[emotion] += 1
 
         total_count = sum(count for count in emotion_counts.values() if count > 0)
-        emotion_percentage = [
+        emotion_percentage_list = [
             {
                 "uid": str(uuid.uuid4()),
                 "emotion": emotion,
@@ -127,7 +81,7 @@ class EmotionListResource(Resource):
             if count > 0
         ]
 
-        paletter_ranks = [
+        paletter_rank_list = [
             {
                 "paletter_code": code,
                 "paletter_name": paletter_name_table[code],
@@ -137,11 +91,11 @@ class EmotionListResource(Resource):
             if emotion_counts[emotion] > 0
         ]
 
-        emotion_percentage.sort(key=lambda x: x["percentage"], reverse=True)
-        paletter_ranks.sort(key=lambda x: x["count"], reverse=True)
+        emotion_percentage_list.sort(key=lambda x: x["percentage"], reverse=True)
+        paletter_rank_list.sort(key=lambda x: x["count"], reverse=True)
 
         return {
             "diary_list": diary_list,
-            "emotion_percentage": emotion_percentage,
-            "paletter_ranks": paletter_ranks,
+            "emotion_percentage_list": emotion_percentage_list,
+            "paletter_rank_list": paletter_rank_list,
         }, 200

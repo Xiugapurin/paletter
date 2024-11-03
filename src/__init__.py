@@ -6,15 +6,12 @@ from flask_restful import Api
 import firebase_admin
 from firebase_admin import credentials, auth
 from config import Config
-from .extensions import db, migrate, scheduler
-
-# from .tasks import paint_daily_diary, refresh_daily_diary
-from src.resources.user import UserResource, UserListResource
+from .extensions import db, migrate
+from src.resources.user import UserResource
 from src.resources.paletter import PaletterListResource
 from src.resources.diary import DiaryResource, DiaryListResource
 from src.resources.diary_entry import DiaryEntryResource, DiaryEntryListResource
 from src.resources.message import MessageListResource, MessageResponseResource
-from src.resources.color import ColorResource, ColorListResource
 from src.resources.emotion import EmotionListResource
 
 
@@ -33,22 +30,12 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
 
-    scheduler.init_app(app)
-    # scheduler.add_job(
-    #     func=paint_daily_diary, trigger="cron", hour=14, minute=52, id="daily_paint"
-    # )
-    # scheduler.add_job(
-    #     func=refresh_daily_diary, trigger="cron", hour=6, minute=0, id="daily_refresh"
-    # )
-    scheduler.start()
-
     cred = credentials.Certificate(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"))
     firebase_admin.initialize_app(cred)
     # firebase_admin.initialize_app()
 
     api = Api(app)
     api.add_resource(UserResource, "/api/user")
-    api.add_resource(UserListResource, "/api/users")
     api.add_resource(PaletterListResource, "/api/paletters")
     api.add_resource(DiaryResource, "/api/diary/<int:diary_id>")
     api.add_resource(DiaryListResource, "/api/diaries/<int:page>")
@@ -56,11 +43,9 @@ def create_app(config_class=Config):
         DiaryEntryResource, "/api/diary-entry/<int:diary_id>/<int:diary_entry_id>"
     )
     api.add_resource(DiaryEntryListResource, "/api/diary-entries/<int:diary_id>")
-    api.add_resource(ColorResource, "/api/color/<string:color>")
-    api.add_resource(ColorListResource, "/api/colors/<int:year>/<int:month>")
-    api.add_resource(EmotionListResource, "/api/emotions/<int:year>/<int:month>")
     api.add_resource(MessageListResource, "/api/messages/<int:paletter_id>/<int:page>")
     api.add_resource(MessageResponseResource, "/api/messages/<int:paletter_id>")
+    api.add_resource(EmotionListResource, "/api/emotions/<int:year>/<int:month>")
 
     @app.before_request
     def authenticate_user():
