@@ -22,3 +22,27 @@ paletter_code_table = {
     "Pink": [{"number": "1", "name": "餓餓鷺"}],
     "White": [{"number": "1", "name": "數寶寶"}],
 }
+
+emotion_value_table = {
+    "Red": {"arousal": 1.0, "valence": 0.5},
+    "Orange": {"arousal": 1.0, "valence": 1.0},
+    "Yellow": {"arousal": 0.5, "valence": 1.0},
+    "Green": {"arousal": 0.0, "valence": 1.0},
+    "Blue": {"arousal": 0.0, "valence": 0.5},
+    "Indigo": {"arousal": 0.0, "valence": 0.0},
+    "Purple": {"arousal": 0.5, "valence": 0.0},
+    "Pink": {"arousal": 1.0, "valence": 0.0},
+    "White": {"arousal": 0.5, "valence": 0.5},
+}
+
+# emotion_value_table = {
+#     "Red": {"arousal": 1.0, "valence": 0.5},
+#     "Orange": {"arousal": 0.75, "valence": 0.75},
+#     "Yellow": {"arousal": 0.5, "valence": 1.0},
+#     "Green": {"arousal": 0.25, "valence": 0.75},
+#     "Blue": {"arousal": 0.0, "valence": 0.5},
+#     "Indigo": {"arousal": 0.25, "valence": 0.25},
+#     "Purple": {"arousal": 0.5, "valence": 0.0},
+#     "Pink": {"arousal": 0.75, "valence": 0.25},
+#     "White": {"arousal": 0.0, "valence": 0.0},
+# }

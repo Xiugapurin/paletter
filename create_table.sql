@@ -23,7 +23,7 @@ CREATE TABLE diary_entries (
     diary_id INTEGER REFERENCES diaries (diary_id) ON DELETE CASCADE,
     title VARCHAR(63) DEFAULT '' NOT NULL,
     content TEXT DEFAULT '' NOT NULL,
-    emotion VARCHAR(15) DEFAULT 'White' NOT NULL,
+    emotion VARCHAR(15) DEFAULT '' NOT NULL,
     created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     last_edit_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );

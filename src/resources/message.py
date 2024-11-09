@@ -43,9 +43,7 @@ class MessageListResource(Resource):
 
         if not pagination.items:
             ai_message = {
-                "message_id": "initial_message",
-                "user_id": user_id,
-                "paletter_id": paletter_id,
+                "message_id": -1,
                 "sender": "AI",
                 "content": "有什麼煩惱要跟我說說嗎？",
                 "send_time": datetime.now().isoformat(),

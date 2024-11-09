@@ -91,7 +91,9 @@ class DiaryEntryResource(Resource):
         db.session.delete(diary_entry)
         db.session.commit()
 
-        return {"message": "Diary entry deleted"}, 200
+        return {
+            "deleted_diary_entry_id": diary_entry_id,
+        }, 200
 
 
 class DiaryEntryListResource(Resource):

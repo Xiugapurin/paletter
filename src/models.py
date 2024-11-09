@@ -60,6 +60,14 @@ class Diary(db.Model):
             "reply_paletter_code": self.reply_paletter_code,
         }
 
+    def to_emotion_dict(self):
+        return {
+            "diary_id": self.diary_id,
+            "date": self.date.isoformat(),
+            "emotion": self.reply_paletter_code.split("-")[0],
+            "paletter_code": self.reply_paletter_code,
+        }
+
 
 class DiaryEntry(db.Model):
     __tablename__ = "diary_entries"
@@ -72,7 +80,7 @@ class DiaryEntry(db.Model):
     )
     title = db.Column(db.String(63), default="", nullable=False)
     content = db.Column(db.Text, default="", nullable=False)
-    emotion = db.Column(db.String(15), default="None", nullable=False)
+    emotion = db.Column(db.String(15), default="", nullable=False)
     created_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
     last_edit_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
