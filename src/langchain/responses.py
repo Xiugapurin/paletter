@@ -108,15 +108,22 @@ def split_response_chain(content):
 
     output = chain.invoke({"query": content})
 
-    processed_messages = []
+    striped_messages = []
     for msg in output["messages"]:
         msg = msg["content"]
         if msg.endswith("。") or msg.endswith("，"):
             msg = msg[:-1]
         if msg:
-            processed_messages.append(msg.strip())
+            striped_messages.append(msg.strip())
 
-    return processed_messages
+    print(striped_messages)
+    processed_messages = []
+    for msg in striped_messages:
+        if msg.endswith("?") or msg.endswith("？"):
+            continue
+        processed_messages.append(msg)
+
+    return processed_messages if processed_messages else striped_messages
 
 
 def get_chat_responses(
@@ -126,6 +133,7 @@ def get_chat_responses(
     paletter_name,
     days,
     chat_history_context,
+    chat_history_context_clue,
     relevant_context,
     today_diary_context,
     membership_level,
@@ -157,9 +165,10 @@ def get_chat_responses(
 
         clue_template = response_clue_template.format(
             date_time=date_time,
+            user_name=user_name,
             message=user_message,
             relevant_context=relevant_context,
-            chat_history_context=chat_history_context,
+            chat_history_context=chat_history_context_clue,
             today_diary_context=today_diary_context,
         )
         clue_prompt = create_prompt_template(clue_template)

@@ -1,5 +1,5 @@
 response_clue_template = """##Instruction##
-今天的日期是 {date_time}，你的任務是負責從大量文字中找出朋友的喜好或是意圖，並且整理後回傳。
+今天的日期是 {date_time}，你的任務是負責從大量文字中找出朋友「{user_name}」的喜好或是意圖，並且整理後回傳。
 其中我們擁有的線索包含了先前朋友所寫下的多篇日記，以及目前朋友在聊天室中和AI聊天的上下文，請據此判斷朋友想要得到什麼樣的答案。
 ##End of Instruction##
 ##Clue & Context##
@@ -13,8 +13,7 @@ response_clue_template = """##Instruction##
 {today_diary_context}
 ---
 ##Output Instruction##
-若是線索完全和訊息無關，請回傳「無線索」；否則請將最相關的幾個上下文連同日期回傳，並且整理出你的觀察與洞見。
-注意：你只需要輸出純文字，不必輸出 markdown 語法。以下是範例輸出格式：
+請將最相關的幾個上下文連同日期回傳，並且整理出你的觀察與洞見。注意：你只需要輸出純文字，不必輸出 markdown 語法。以下是範例輸出格式：
 [relevant context-1]
 [relevant context-2]
 ...

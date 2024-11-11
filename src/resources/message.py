@@ -198,31 +198,32 @@ class MessageResponseResource(Resource):
             relevant_knowledge = (
                 Knowledge.query.filter_by(user_id=user_id, paletter_id=paletter_id)
                 .order_by(Knowledge.embedding.cosine_distance(content_embedding))
-                .limit(16)
+                .limit(8)
                 .all()
             )
 
             for i, knowledge in enumerate(relevant_knowledge):
                 context_source = "日記" if knowledge.source == "Diary" else "訊息"
                 relevant_context += (
-                    f"線索{str(i+1)} - {context_source}內容: {knowledge.content}\n"
+                    f"線索{str(i+1)} - {context_source}內容: {knowledge.content}\n---\n"
                 )
 
         chat_history = (
             Message.query.filter_by(user_id=user_id, paletter_id=paletter_id)
             .order_by(Message.send_time.desc())
-            .limit(12)
+            .limit(20)
             .all()
         )
         chat_history_context = ""
         chat_history_context_clue = ""
         for message in reversed(chat_history):
             if message.sender == "USER":
-                sender = "朋友"
+                sender = clue_sender = "朋友"
             elif message.sender == "AI":
                 sender = paletter_name
+                clue_sender = f"{paletter_name} (AI)"
             chat_history_context += f"{sender}: {message.content}\n"
-            chat_history_context_clue += f"{message.sender}: {message.content}\n"
+            chat_history_context_clue += f"{clue_sender}: {message.content}\n"
 
         today = datetime.now().date()
         today_diary = Diary.query.filter_by(user_id=user_id, date=today).first()
@@ -256,6 +257,7 @@ class MessageResponseResource(Resource):
             paletter_name,
             days,
             chat_history_context,
+            chat_history_context_clue,
             relevant_context,
             today_diary_context,
             membership_level,
