@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import g
 from flask_restful import Resource, reqparse
 from src import db
 from src.models import User, Paletter, Diary, DiaryEntry, Message, Knowledge
-from src.langchain.responses import get_chat_responses
+from src.langchain.responses import get_chat_responses, get_weekly_report
 from src.langchain.utils import get_embedding
 from src.constants.paletter_table import paletter_name_table
 
@@ -11,13 +11,122 @@ parser = reqparse.RequestParser()
 parser.add_argument("content", type=str)
 
 
+def merge_consecutive_ai_messages(message_contents):
+    merged_messages = []
+    temp_ai_message = None
+
+    for message in message_contents:
+        current_time = message["send_time"]
+        sender = message["sender"]
+        content = message["content"]
+
+        if sender == "AI":
+            if temp_ai_message is None:
+                temp_ai_message = {
+                    "send_time": current_time,
+                    "sender": "AI",
+                    "content": content,
+                }
+            else:
+                temp_ai_message["content"] += " " + content
+        else:
+            if temp_ai_message is not None:
+                merged_messages.append(temp_ai_message)
+                temp_ai_message = None
+
+            merged_messages.append(
+                {"send_time": current_time, "sender": sender, "content": content}
+            )
+
+    if temp_ai_message is not None:
+        merged_messages.append(temp_ai_message)
+
+    formatted_messages = []
+    for message in merged_messages:
+        formatted_message = (
+            f"Time: {message['send_time'].strftime('%m-%d %H:%M')}\n"
+            f"Sender: {message['sender']}\n"
+            f"Content: {message['content']}"
+        )
+        formatted_messages.append(formatted_message)
+
+    return "\n---\n".join(formatted_messages)
+
+
 class MessageResource(Resource):
     def get(self):
-        pass
-
-    def delete(self):
         user_id = g.user_id
-        pass
+        today = datetime.now().date()
+
+        user = User.query.get_or_404(user_id)
+        user_name = user.name
+        days = str((datetime.now() - user.created_time).days + 1)
+
+        week_ago = today - timedelta(days=7)
+        weekly_diaries = Diary.query.filter(
+            Diary.user_id == user_id, Diary.date >= week_ago, Diary.date <= today
+        ).all()
+
+        start_of_week = datetime.combine(week_ago, datetime.min.time())
+        end_of_today = datetime.combine(today, datetime.max.time())
+
+        all_entries = []
+        diary_ids = [diary.diary_id for diary in weekly_diaries]
+
+        if diary_ids:
+            all_entries = (
+                DiaryEntry.query.filter(DiaryEntry.diary_id.in_(diary_ids))
+                .order_by(DiaryEntry.created_time)
+                .all()
+            )
+
+        entry_contents = []
+        for entry in all_entries:
+            entry_contents.append(
+                {"content": entry.content, "created_time": entry.created_time}
+            )
+
+        messages = (
+            Message.query.join(Paletter, Message.paletter_id == Paletter.paletter_id)
+            .filter(
+                Message.user_id == user_id,
+                Paletter.paletter_code == "Pal-1",
+                Message.send_time >= start_of_week,
+                Message.send_time <= end_of_today,
+            )
+            .order_by(Message.send_time)
+            .all()
+        )
+
+        message_contents = []
+        for message in messages:
+            message_contents.append(
+                {
+                    "content": message.content,
+                    "sender": message.sender,
+                    "send_time": message.send_time,
+                }
+            )
+
+        formatted_entries = []
+        for entry in entry_contents:
+            formatted_entry = (
+                f"Time: {entry['created_time'].strftime('%m-%d %H:%M')}\n"
+                f"Content: {entry['content']}"
+            )
+            formatted_entries.append(formatted_entry)
+        diary_contents_str = "\n---\n".join(formatted_entries)
+        message_contents_str = merge_consecutive_ai_messages(message_contents)
+
+        weekly_report = get_weekly_report(
+            user_name, days, diary_contents_str, message_contents_str
+        )
+
+        return {
+            "report_start_date": week_ago.strftime("%Y-%m-%d"),
+            "report_end_date": today.strftime("%Y-%m-%d"),
+            "report_content": weekly_report,
+        }, 200
 
 
 class MessageListResource(Resource):
@@ -89,7 +198,7 @@ class MessageResponseResource(Resource):
             relevant_knowledge = (
                 Knowledge.query.filter_by(user_id=user_id, paletter_id=paletter_id)
                 .order_by(Knowledge.embedding.cosine_distance(content_embedding))
-                .limit(5)
+                .limit(16)
                 .all()
             )
 
@@ -106,12 +215,14 @@ class MessageResponseResource(Resource):
             .all()
         )
         chat_history_context = ""
+        chat_history_context_clue = ""
         for message in reversed(chat_history):
             if message.sender == "USER":
                 sender = "朋友"
             elif message.sender == "AI":
                 sender = paletter_name
             chat_history_context += f"{sender}: {message.content}\n"
+            chat_history_context_clue += f"{message.sender}: {message.content}\n"
 
         today = datetime.now().date()
         today_diary = Diary.query.filter_by(user_id=user_id, date=today).first()
@@ -138,7 +249,7 @@ class MessageResponseResource(Resource):
         )
         db.session.add(user_message)
 
-        ai_response_contents, emotion = get_chat_responses(
+        ai_response_contents = get_chat_responses(
             content,
             user_name,
             paletter_code,
@@ -164,7 +275,6 @@ class MessageResponseResource(Resource):
 
         db.session.commit()
 
-        # TODO: add emotion
         return {
             "ai_messages": [msg.to_dict() for msg in ai_messages],
         }, 200

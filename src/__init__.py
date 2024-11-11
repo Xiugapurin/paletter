@@ -11,7 +11,11 @@ from src.resources.user import UserResource
 from src.resources.paletter import PaletterListResource
 from src.resources.diary import DiaryResource, DiaryListResource
 from src.resources.diary_entry import DiaryEntryResource, DiaryEntryListResource
-from src.resources.message import MessageListResource, MessageResponseResource
+from src.resources.message import (
+    MessageResource,
+    MessageListResource,
+    MessageResponseResource,
+)
 from src.resources.emotion import EmotionListResource
 
 
@@ -43,6 +47,7 @@ def create_app(config_class=Config):
         DiaryEntryResource, "/api/diary-entry/<int:diary_id>/<int:diary_entry_id>"
     )
     api.add_resource(DiaryEntryListResource, "/api/diary-entries/<int:diary_id>")
+    api.add_resource(MessageResource, "/api/message")
     api.add_resource(MessageListResource, "/api/messages/<int:paletter_id>/<int:page>")
     api.add_resource(MessageResponseResource, "/api/messages/<int:paletter_id>")
     api.add_resource(EmotionListResource, "/api/emotions/<int:year>/<int:month>")

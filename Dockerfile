@@ -17,5 +17,5 @@ COPY . .
 
 EXPOSE 8080
 
-CMD ["gunicorn", "-b", "0.0.0.0:8080", "app:app", "--workers=1", "--timeout=10", "--log-level=debug", "--access-logfile=-", "--error-logfile=-"]
+CMD ["gunicorn", "-b", "0.0.0.0:8080", "app:app", "--workers=1", "--timeout=40", "--log-level=debug", "--access-logfile=-", "--error-logfile=-"]
 # CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 app:app --log-level debug --access-logfile - --error-logfile -

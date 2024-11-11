@@ -21,6 +21,7 @@ from .templates.chat import (
 )
 from .templates.diary import diary_emotion_template, diary_title_template
 from .templates.reply import basic_reply_template, stranger_reply_template
+from .templates.report import basic_report_template
 
 
 class MessageContent(BaseModel):
@@ -154,14 +155,27 @@ def get_chat_responses(
     if membership_level == "Premium":
         model = ChatOpenAI(model="gpt-4o-mini")
 
+        clue_template = response_clue_template.format(
+            date_time=date_time,
+            message=user_message,
+            relevant_context=relevant_context,
+            chat_history_context=chat_history_context,
+            today_diary_context=today_diary_context,
+        )
+        clue_prompt = create_prompt_template(clue_template)
+        clue_runnable = clue_prompt | model | StrOutputParser()
+        clues = clue_runnable.invoke({"input": user_message})
+
+        print("CLUE:\n" + clue_template)
+
         system_template = premium_chat_template.format(
             settings=setting_template,
             date_time=date_time,
             paletter_name=paletter_name,
             user_name=user_name,
+            clues=clues,
             chat_history_context=chat_history_context,
             today_diary_context=today_diary_context,
-            relevant_context=relevant_context,
         )
 
     print(system_template)
@@ -169,14 +183,9 @@ def get_chat_responses(
     runnable = prompt | model | StrOutputParser()
     content = runnable.invoke({"input": user_message})
 
-    # emotion = get_emotion(content)
-    emotion = "None"
-    if paletter_code != "Indigo-1":
-        responses = split_response_chain(content)
-    else:
-        responses = [content]
+    responses = split_response_chain(content)
 
-    return responses, emotion
+    return responses
 
 
 def get_diary_reply(
@@ -206,3 +215,27 @@ def get_diary_reply(
     reply = runnable.invoke({"input": diary_content})
 
     return reply
+
+
+def get_weekly_report(user_name, days, entry_contents, message_contents):
+    setting_template = paletter_setting_templates["Pal-1"].format(
+        user_name=user_name,
+        days=days,
+    )
+
+    system_template = basic_report_template.format(
+        settings=setting_template,
+        user_name=user_name,
+        diary_contents=entry_contents,
+        message_contents=message_contents,
+    )
+
+    print(system_template)
+    requirement = "請給我一篇能夠根據我過去一週的表現，以喵喵視角客製化的個人報告。"
+
+    model = ChatOpenAI(model="gpt-4o-mini", max_tokens=1000)
+    prompt = create_prompt_template(system_template)
+    runnable = prompt | model | StrOutputParser()
+    report = runnable.invoke({"input": requirement})
+
+    return report
