@@ -44,7 +44,6 @@ class UserResource(Resource):
         user = User.query.get_or_404(user_id)
         args = parser.parse_args()
         user.name = args.get("name", user.name)
-        user.profile_picture = args.get("profile_picture", user.profile_picture)
         db.session.commit()
 
         return user.to_dict()

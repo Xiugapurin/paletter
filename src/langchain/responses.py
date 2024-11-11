@@ -74,7 +74,7 @@ def get_diary_title_and_emotion(
 ):
     timestamp = datetime.now().strftime("%H:%M")
     if len(diary_content) <= 10:
-        return "心情小記", "White"
+        return "心情小记", "White"
 
     parser = PydanticOutputParser(pydantic_object=DiaryEntryEmotion)
     model = ChatOpenAI(model="gpt-4o-mini")
@@ -142,7 +142,7 @@ def get_chat_responses(
     chat_history_context = (
         chat_history_context
         if chat_history_context
-        else "沒有任何聊天記錄，請試著向朋友問好哦"
+        else "没有任何聊天记录，请试着向朋友问好哦"
     )
 
     setting_template = paletter_setting_templates[paletter_code].format(
@@ -240,7 +240,7 @@ def get_weekly_report(user_name, days, entry_contents, message_contents):
     )
 
     print(system_template)
-    requirement = "請給我一篇能夠根據我過去一週的表現，以喵喵視角客製化的個人報告。"
+    requirement = "请给我一篇能够根据我过去一週的表现，以喵喵视角客製化的个人报告。"
 
     model = ChatOpenAI(model="gpt-4o-mini", max_tokens=1000)
     prompt = create_prompt_template(system_template)

@@ -154,7 +154,7 @@ class MessageListResource(Resource):
             ai_message = {
                 "message_id": -1,
                 "sender": "AI",
-                "content": "有什麼煩惱要跟我說說嗎？",
+                "content": "有什麽烦恼要跟我说说吗",
                 "send_time": datetime.now().isoformat(),
             }
 
@@ -203,9 +203,9 @@ class MessageResponseResource(Resource):
             )
 
             for i, knowledge in enumerate(relevant_knowledge):
-                context_source = "日記" if knowledge.source == "Diary" else "訊息"
+                context_source = "日记" if knowledge.source == "Diary" else "讯息"
                 relevant_context += (
-                    f"線索{str(i+1)} - {context_source}內容: {knowledge.content}\n---\n"
+                    f"线索{str(i+1)} - {context_source}內容: {knowledge.content}\n---\n"
                 )
 
         chat_history = (
@@ -227,7 +227,7 @@ class MessageResponseResource(Resource):
 
         today = datetime.now().date()
         today_diary = Diary.query.filter_by(user_id=user_id, date=today).first()
-        today_diary_context = "今天沒有日記"
+        today_diary_context = "今天没有日记"
         if today_diary:
             diary_id = today_diary.diary_id
             diary_entries = DiaryEntry.query.filter_by(diary_id=diary_id).all()

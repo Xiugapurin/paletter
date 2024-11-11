@@ -22,15 +22,13 @@ def combine_entries_to_chunks(diary_entries):
         entry = diary_entries[i]
         timestamp = f"{entry.created_time.strftime('20%y/%m/%d %H:%M')}"
         entry_text = f"{timestamp} - {entry.content}"
-        entry_length = len(entry.content)  # 只計算content的長度，不含timestamp
+        entry_length = len(entry.content)
 
-        # 如果單一entry字數大於200，直接加入chunks
         if entry_length > 200:
             chunks.append(entry_text)
             i += 1
             continue
 
-        # 如果entry字數小於200，嘗試與後續entries合併
         current_chunk = [entry_text]
         current_length = entry_length
         next_idx = i + 1
@@ -38,9 +36,8 @@ def combine_entries_to_chunks(diary_entries):
 
         while next_idx < len(diary_entries) and current_length < 200 and can_combine:
             next_entry = diary_entries[next_idx]
-            next_length = len(next_entry.content)  # 只計算content的長度，不含timestamp
+            next_length = len(next_entry.content)
 
-            # 檢查合併後是否會超過300
             if current_length + next_length > 300:
                 can_combine = False
                 break
@@ -51,7 +48,6 @@ def combine_entries_to_chunks(diary_entries):
             current_length += next_length
             next_idx += 1
 
-        # 將當前chunk加入chunks列表
         chunks.append("\n\n".join(current_chunk))
         i = next_idx if can_combine else i + 1
 
