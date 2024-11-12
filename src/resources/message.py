@@ -277,6 +277,7 @@ class MessageResponseResource(Resource):
 
         db.session.commit()
 
+        print("Messages: ", content, ai_messages)
         return {
             "ai_messages": [msg.to_dict() for msg in ai_messages],
         }, 200

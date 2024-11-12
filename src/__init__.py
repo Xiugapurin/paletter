@@ -9,6 +9,7 @@ from config import Config
 from .extensions import db, migrate
 from src.resources.user import UserResource
 from src.resources.paletter import PaletterListResource
+from src.resources.greeting import GreetingResource
 from src.resources.diary import DiaryResource, DiaryListResource
 from src.resources.diary_entry import DiaryEntryResource, DiaryEntryListResource
 from src.resources.message import (
@@ -41,6 +42,7 @@ def create_app(config_class=Config):
     api = Api(app)
     api.add_resource(UserResource, "/api/user")
     api.add_resource(PaletterListResource, "/api/paletters")
+    api.add_resource(GreetingResource, "/api/greeting")
     api.add_resource(DiaryResource, "/api/diary/<int:diary_id>")
     api.add_resource(DiaryListResource, "/api/diaries/<int:page>")
     api.add_resource(

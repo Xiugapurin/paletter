@@ -1,6 +1,6 @@
 # paletter_name_table = {
 #     "Pal-1": "喵喵",
-#     "Red-1": "辣辣芋",
+#     "Red-1": "麻辣辣",
 #     "Orange-1": "石哥哥",
 #     "Yellow-1": "布布仔",
 #     "Green-1": "靜靜龜",
@@ -12,7 +12,7 @@
 # }
 
 # paletter_code_table = {
-#     "Red": [{"number": "1", "name": "辣辣芋"}],
+#     "Red": [{"number": "1", "name": "麻辣辣"}],
 #     "Orange": [{"number": "1", "name": "石哥哥"}],
 #     "Yellow": [{"number": "1", "name": "布布仔"}],
 #     "Green": [{"number": "1", "name": "靜靜龜"}],
@@ -25,7 +25,7 @@
 
 paletter_name_table = {
     "Pal-1": "喵喵",
-    "Red-1": "辣辣芋",
+    "Red-1": "麻辣辣",
     "Orange-1": "石哥哥",
     "Yellow-1": "布布仔",
     "Green-1": "静静龟",
@@ -37,7 +37,7 @@ paletter_name_table = {
 }
 
 paletter_code_table = {
-    "Red": [{"number": "1", "name": "辣辣芋"}],
+    "Red": [{"number": "1", "name": "麻辣辣"}],
     "Orange": [{"number": "1", "name": "石哥哥"}],
     "Yellow": [{"number": "1", "name": "布布仔"}],
     "Green": [{"number": "1", "name": "静静龟"}],

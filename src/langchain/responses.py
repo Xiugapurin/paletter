@@ -1,3 +1,4 @@
+import random
 from typing import List
 from enum import Enum
 
@@ -13,6 +14,7 @@ from langchain_core.output_parsers import (
 from pydantic import BaseModel, Field
 from .utils import create_prompt_template
 from .templates.paletter import paletter_setting_templates
+from .templates.greeting import basic_greeting_template
 from .templates.chat import (
     basic_chat_template,
     response_clue_template,
@@ -46,6 +48,29 @@ class EmotionEnum(str, Enum):
 
 class DiaryEntryEmotion(BaseModel):
     emotion: EmotionEnum = Field(description="The emotion of the diary entry")
+
+
+def get_greeting(user_name, days, entry_contents, message_contents):
+    setting_template = paletter_setting_templates["Pal-1"].format(
+        user_name=user_name,
+        days=days,
+    )
+
+    system_template = basic_greeting_template.format(
+        settings=setting_template,
+        user_name=user_name,
+        diary_contents=entry_contents,
+        message_contents=message_contents,
+    )
+
+    requirement = f"请根据过去一天的日记和聊天记录，给{user_name}一句温暖的问候。"
+
+    model = ChatOpenAI(model="gpt-4o-mini", max_tokens=100)
+    prompt = create_prompt_template(system_template)
+    runnable = prompt | model | StrOutputParser()
+    greeting = runnable.invoke({"input": requirement})
+
+    return greeting
 
 
 def get_diary_emotion(
@@ -116,10 +141,9 @@ def split_response_chain(content):
         if msg:
             striped_messages.append(msg.strip())
 
-    print(striped_messages)
     processed_messages = []
     for msg in striped_messages:
-        if msg.endswith("?") or msg.endswith("？"):
+        if msg.endswith("?") or msg.endswith("？") and random.randint(0, 1) == 1:
             continue
         processed_messages.append(msg)
 
@@ -175,8 +199,6 @@ def get_chat_responses(
         clue_runnable = clue_prompt | model | StrOutputParser()
         clues = clue_runnable.invoke({"input": user_message})
 
-        print("CLUE:\n" + clue_template)
-
         system_template = premium_chat_template.format(
             settings=setting_template,
             date_time=date_time,
@@ -187,7 +209,6 @@ def get_chat_responses(
             today_diary_context=today_diary_context,
         )
 
-    print(system_template)
     prompt = create_prompt_template(system_template)
     runnable = prompt | model | StrOutputParser()
     content = runnable.invoke({"input": user_message})
@@ -239,7 +260,6 @@ def get_weekly_report(user_name, days, entry_contents, message_contents):
         message_contents=message_contents,
     )
 
-    print(system_template)
     requirement = "请给我一篇能够根据我过去一週的表现，以喵喵视角客製化的个人报告。"
 
     model = ChatOpenAI(model="gpt-4o-mini", max_tokens=1000)
